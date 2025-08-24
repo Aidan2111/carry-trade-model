@@ -43,13 +43,6 @@ secrets.txt
 config.ini
 credentials.json
 
-# Data Files (potentially sensitive)
-*.csv
-logs/
-cache/
-data/
-historical_data/
-
 # Jupyter Notebook
 .ipynb_checkpoints
 
@@ -69,14 +62,18 @@ historical_data/
 ehthumbs.db
 Thumbs.db
 
-# Node.js
+# Node.js - COMPREHENSIVE EXCLUSION
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
-# React build
+# React build and dependencies
 frontend/build/
+frontend/dist/
+frontend/node_modules/
 frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
@@ -103,6 +100,22 @@ frontend/.env.production.local
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
+
+# Next.js build output
+.next
+out
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
 
 # Temporary folders
 tmp/
@@ -155,20 +168,42 @@ web_modules/
 .rts2_cache_es/
 .rts2_cache_umd/
 
-# Optional REPL history
-.node_repl_history
+# SENSITIVE DATA FILES - DO NOT COMMIT
+logs/
+cache/
+data/
+historical_data/
+*.csv
+news_log.csv
+performance_log.csv
 
-# Output of 'npm pack'
-*.tgz
+# FX Data Files
+fx_log.csv
+*Historical Data.csv
+EUR_*.csv
+USD_*.csv
+GBP_*.csv
 
-# Yarn Integrity file
-.yarn-integrity
+# News and Headlines
+*headlines.csv
+cnbc_headlines.csv
+guardian_headlines.csv
+reuters_headlines.csv
 
-# Financial data that shouldn't be public
-fx_rates.json
+# Macro Data
+*_CPI.csv
+*_FedFunds.csv
+*_InflationExpectations.csv
+*_YieldCurve.csv
+*_ConsumerPrices.csv
+macro_log.csv
+
+# Model and Performance Data
 portfolio_data.json
 trading_history.json
 performance_data.json
+fx_rates.json
+data_engine.log
 
 # Model files (can be large)
 *.pkl
@@ -181,3 +216,22 @@ performance_data.json
 *.db
 *.sqlite
 *.sqlite3
+
+# Large text files with model outputs
+*.txt
+Carry_Trade_Model*.txt
+Data_Type_Checker.txt
+
+# Batch files (keep local only)
+*.bat
+
+# Package-lock files (keep only package.json)
+package-lock.json
+yarn.lock
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
