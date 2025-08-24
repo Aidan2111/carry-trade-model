@@ -1,0 +1,15 @@
+pandas
+numpy
+matplotlib
+scikit-learn
+vaderSentiment
+newsapi-python
+transformers
+torch
+yfinance
+lightgbm
+xgboost
+SHAP
+flask
+flask-cors
+python-dotenv

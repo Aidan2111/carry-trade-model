@@ -111,7 +111,7 @@ dist
 
 # Gatsby files
 .cache/
-public
+# public
 
 # Storybook build outputs
 .out
@@ -219,6 +219,7 @@ data_engine.log
 
 # Large text files with model outputs
 *.txt
+!requirements.txt
 Carry_Trade_Model*.txt
 Data_Type_Checker.txt
 
