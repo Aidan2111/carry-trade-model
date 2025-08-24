@@ -43,7 +43,7 @@ class RealDataProvider:
                     logger.info("Running live model...")
                     
                     # Use the virtual environment Python
-                    python_path = os.path.join(self.base_dir, 'venv', 'Scripts', 'python.exe')
+                    python_path = r"python"
                     if not os.path.exists(python_path):
                         python_path = 'python'  # Fallback
                     

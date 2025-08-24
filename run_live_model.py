@@ -265,22 +265,22 @@ def update_performance_log(performance_data):
         print(f"Error updating performance log: {e}")
 
 if __name__ == "__main__":
-    print("🤖 Running Live Ensemble Model for Dashboard...")
+    print("Running Live Ensemble Model for Dashboard...")
     print("=" * 50)
     
     result = run_ensemble_model()
     
     if result['status'] == 'success':
-        print("✅ Model run successful!")
-        print(f"📊 Generated {len(result['predictions'])} predictions")
-        print(f"📈 Performance metrics updated")
+        print("Model run successful!")
+        print(f"Generated {len(result['predictions'])} predictions")
+        print("Performance metrics updated")
         
         # Print predictions
         for pred in result['predictions']:
             print(f"   {pred['pair']}: {pred['predicted_return']:.2f}% (confidence: {pred['confidence']:.2f})")
             
     else:
-        print("❌ Model run failed!")
+        print("Model run failed!")
         print(f"Error: {result['error']}")
     
     print("=" * 50)

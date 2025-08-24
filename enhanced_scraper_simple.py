@@ -31,11 +31,16 @@ import threading
 
 class SimpleEnhancedScraper:
     def __init__(self):
-        # Use your existing paths
-        self.base_dir = r"carry-trade-model"
+        # Use current project directory
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.log_dir = os.path.join(self.base_dir, "logs")
         self.fx_dir = os.path.join(self.log_dir, "fx")
         self.macro_dir = os.path.join(self.log_dir, "macro")
+        
+        # Create directories if they don't exist
+        os.makedirs(self.log_dir, exist_ok=True)
+        os.makedirs(self.fx_dir, exist_ok=True)
+        os.makedirs(self.macro_dir, exist_ok=True)
         
         # Initialize APIs with your existing keys
         self.newsapi = NewsApiClient(api_key="[REDACTED_NEWS_API_KEY]")
@@ -51,7 +56,7 @@ class SimpleEnhancedScraper:
         self.running = False
         self.last_update = {}
         
-        print("🚀 Enhanced Scraper initialized - Ready to upgrade your data!")
+        print("Enhanced Scraper initialized - Ready to upgrade your data!")
     
     def get_multi_source_fx_data(self):
         """Enhanced FX collection with multiple sources"""
@@ -548,7 +553,7 @@ def main():
     """Main function"""
     scraper = SimpleEnhancedScraper()
     
-    print("🚀 ENHANCED AUTO-SCRAPER FOR CARRY TRADE MODEL")
+    print("ENHANCED AUTO-SCRAPER FOR CARRY TRADE MODEL")
     print("=" * 60)
     print("This UPGRADES your current data collection with:")
     print("✅ Multi-source FX rates (3+ sources per pair)")
