@@ -25,7 +25,7 @@ from threading import Thread, Lock
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from newsapi import NewsApiClient
+from news_client import get_newsapi_client
 import asyncio
 import aiohttp
 from concurrent.futures import ThreadPoolExecutor
@@ -50,7 +50,7 @@ class DataConfig:
         
         if self.api_keys is None:
             self.api_keys = {
-                'newsapi': '[REDACTED_NEWS_API_KEY]',
+                'newsapi': os.getenv('NEWS_API_KEY'),
                 'alpha_vantage': 'your_alpha_vantage_key',  # Free: https://www.alphavantage.co/
                 'fred': 'your_fred_key',  # Free: https://fred.stlouisfed.org/
                 'fxrates': 'your_fxrates_key'  # Free tier available
@@ -95,7 +95,7 @@ class RealTimeDataEngine:
         # Initialize components
         self.setup_logging()
         self.analyzer = SentimentIntensityAnalyzer()
-        self.newsapi = NewsApiClient(api_key=config.api_keys['newsapi'])
+        self.newsapi = get_newsapi_client()
         
         # Data cache and locks
         self.data_cache = {}
@@ -369,6 +369,10 @@ class NewsDataCollector:
     
     async def _collect_newsapi_news(self) -> List[Dict[str, Any]]:
         """Collect news from NewsAPI with rate limiting"""
+        if self.engine.newsapi is None:
+            self.logger.info("NEWS_API_KEY not configured; skipping NewsAPI collection")
+            return []
+
         news_items = []
         
         try:

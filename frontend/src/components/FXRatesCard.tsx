@@ -32,11 +32,11 @@ const FXRatesCard: React.FC<Props> = ({ data }) => {
           <h3 className="text-xl font-bold text-gray-100 flex items-center gap-2">
             💱 FX Rates
           </h3>
-          <p className="text-gray-400 text-sm">Real-time currency rates</p>
+          <p className="text-gray-400 text-sm">Currency rates from the API</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50"></div>
-          <span className="text-xs text-emerald-400 font-medium">LIVE</span>
+          <span className="text-xs text-emerald-400 font-medium">DATA</span>
         </div>
       </div>
       
@@ -81,8 +81,8 @@ const FXRatesCard: React.FC<Props> = ({ data }) => {
       {data.length === 0 && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📊</div>
-          <div className="text-gray-400 font-medium">Loading FX data...</div>
-          <div className="text-gray-500 text-sm mt-2">Connecting to live market feeds</div>
+          <div className="text-gray-400 font-medium">No FX data available</div>
+          <div className="text-gray-500 text-sm mt-2">Start the backend or run data collection</div>
         </div>
       )}
     </div>

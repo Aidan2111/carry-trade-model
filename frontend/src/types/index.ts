@@ -64,6 +64,8 @@ export interface DashboardData {
   macroData: MacroData[];
   predictions: ModelPrediction[];
   signals: CarryTradeSignal[];
-  performance: PerformanceMetrics;
+  performance?: PerformanceMetrics | null;
   news: NewsHeadline[];
+  lastUpdate?: string;
+  dataSource?: string;
 }

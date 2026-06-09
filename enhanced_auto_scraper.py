@@ -31,7 +31,7 @@ import json
 from datetime import datetime, timedelta
 import threading
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from newsapi import NewsApiClient
+from news_client import get_newsapi_client
 import logging
 from typing import Dict, List, Optional
 import schedule
@@ -49,8 +49,8 @@ class EnhancedDataScraper:
         os.makedirs(self.fx_dir, exist_ok=True)
         os.makedirs(self.macro_dir, exist_ok=True)
         
-        # Initialize APIs (using your existing keys)
-        self.newsapi = NewsApiClient(api_key="[REDACTED_NEWS_API_KEY]")
+        # Initialize optional NewsAPI client from NEWS_API_KEY
+        self.newsapi = get_newsapi_client()
         self.analyzer = SentimentIntensityAnalyzer()
         
         # Setup logging
@@ -270,6 +270,9 @@ class EnhancedDataScraper:
     
     def _collect_newsapi_news(self) -> List[Dict]:
         """Collect from NewsAPI with smart rate limiting"""
+        if self.newsapi is None:
+            return []
+
         news_items = []
         
         # Rotate queries to maximize coverage while staying within limits

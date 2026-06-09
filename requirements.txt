@@ -2,6 +2,7 @@ pandas
 numpy
 matplotlib
 scikit-learn
+scipy
 vaderSentiment
 newsapi-python
 transformers
@@ -13,3 +14,8 @@ SHAP
 flask
 flask-cors
 python-dotenv
+requests
+feedparser
+aiohttp
+schedule
+fredapi

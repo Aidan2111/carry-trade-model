@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import os
+import sys
 
 # Test data creation and basic functionality
 def create_test_data():
@@ -146,3 +147,4 @@ if __name__ == "__main__":
         print("\n🎉 Improved model testing completed successfully!")
     else:
         print("\n💥 Improved model testing failed!")
+        sys.exit(1)

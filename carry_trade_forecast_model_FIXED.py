@@ -127,7 +127,6 @@ plt.show()
 # --- Trade Logic ---
 rec_usd = "LONG USD/UAH" if forecast_df.loc[0, "predicted_usd_return"] > 0.001 else "HOLD"
 rec_eur = "SHORT EUR/UAH" if forecast_df.loc[0, "predicted_eur_return"] < -0.001 else "HOLD"
-print("
---- Trade Recommendation ---")
+print("\n--- Trade Recommendation ---")
 print(f"→ USD Strategy: {rec_usd}")
 print(f"→ EUR Strategy: {rec_eur}")

@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import requests
 from datetime import datetime
-from newsapi import NewsApiClient
+from news_client import get_newsapi_client
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import yfinance as yf
 
@@ -19,8 +19,8 @@ os.makedirs(fx_dir, exist_ok=True)
 # --- Paths for saving files ---
 news_log_path = os.path.join(log_dir, "news_log.csv")
 
-# --- Initialize NewsAPI client with your API key ---
-newsapi = NewsApiClient(api_key="[REDACTED_NEWS_API_KEY]")
+# --- Initialize NewsAPI client from NEWS_API_KEY when available ---
+newsapi = get_newsapi_client()
 
 # --- Define date range for new articles ---
 # We fetch articles from 2020-01-01 up to today.
@@ -31,7 +31,7 @@ to_date = datetime.today().strftime('%Y-%m-%d')
 all_articles = []
 page = 1
 page_size = 100  # maximum page size supported
-while True:
+while newsapi is not None:
     response = newsapi.get_everything(
         q="finance OR economics OR news",  # adjust query keywords as needed
         from_param=from_date,
@@ -49,6 +49,9 @@ while True:
     if len(articles) < page_size:
         break
     page += 1
+
+if newsapi is None:
+    print("NEWS_API_KEY is not configured; skipping NewsAPI historical fetch.")
 
 print(f"Fetched {len(all_articles)} articles from NewsAPI.")
 
@@ -77,5 +80,4 @@ else:
 # --- Save updated news log ---
 combined_news.to_csv(news_log_path, index=False)
 print(f"Updated news log saved to {news_log_path}")
-
 

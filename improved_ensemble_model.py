@@ -16,8 +16,28 @@ from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.feature_selection import SelectKBest, f_regression, RFE
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-import lightgbm as lgb
-import xgboost as xgb
+def _optional_model_error(exc):
+    message = str(exc)
+    if 'libomp' in message:
+        return 'OpenMP runtime libomp is not installed; run `brew install libomp` on macOS to enable this model.'
+    return message.splitlines()[0] if message else exc.__class__.__name__
+
+
+try:
+    import lightgbm as lgb
+except Exception as exc:
+    lgb = None
+    LIGHTGBM_IMPORT_ERROR = _optional_model_error(exc)
+else:
+    LIGHTGBM_IMPORT_ERROR = None
+
+try:
+    import xgboost as xgb
+except Exception as exc:
+    xgb = None
+    XGBOOST_IMPORT_ERROR = _optional_model_error(exc)
+else:
+    XGBOOST_IMPORT_ERROR = None
 
 # Technical analysis (simplified without TA-Lib)
 from scipy import stats
@@ -42,11 +62,50 @@ class ImprovedCarryTradeModel:
         self.scalers = {}
         self.feature_selectors = {}
         self.performance_metrics = {}
+        self._optional_model_warnings_printed = set()
         
         # Ensure logs directory exists
         os.makedirs(self.logs_dir, exist_ok=True)
         os.makedirs(os.path.join(self.logs_dir, 'fx'), exist_ok=True)
         os.makedirs(os.path.join(self.logs_dir, 'macro'), exist_ok=True)
+
+    def _build_base_models(self, n_estimators=100):
+        """Build the ensemble with optional boosted-tree models when available."""
+        models = [
+            ('rf', RandomForestRegressor(n_estimators=n_estimators, random_state=42, n_jobs=-1))
+        ]
+
+        if xgb is not None:
+            models.append((
+                'xgb',
+                xgb.XGBRegressor(
+                    n_estimators=n_estimators,
+                    random_state=42,
+                    n_jobs=-1,
+                    verbosity=0
+                )
+            ))
+        else:
+            if 'xgboost' not in self._optional_model_warnings_printed:
+                print(f"⚠️ Skipping XGBoost: {XGBOOST_IMPORT_ERROR}")
+                self._optional_model_warnings_printed.add('xgboost')
+
+        if lgb is not None:
+            models.append((
+                'lgb',
+                lgb.LGBMRegressor(
+                    n_estimators=n_estimators,
+                    random_state=42,
+                    n_jobs=-1,
+                    verbosity=-1
+                )
+            ))
+        else:
+            if 'lightgbm' not in self._optional_model_warnings_printed:
+                print(f"⚠️ Skipping LightGBM: {LIGHTGBM_IMPORT_ERROR}")
+                self._optional_model_warnings_printed.add('lightgbm')
+
+        return models
     
     def load_and_prepare_data(self):
         """
@@ -190,6 +249,19 @@ class ImprovedCarryTradeModel:
             
             if date_col:
                 sentiment_data['date'] = pd.to_datetime(sentiment_data[date_col])
+
+                wide_sentiment_cols = ['sentiment_usd', 'sentiment_eur', 'sentiment_uah']
+                if all(col in sentiment_data.columns for col in wide_sentiment_cols):
+                    return sentiment_data[['date', *wide_sentiment_cols]]
+
+                if not {'Region', 'Sentiment'}.issubset(sentiment_data.columns):
+                    print("⚠️ Sentiment log missing Region/Sentiment columns; using neutral sentiment")
+                    return pd.DataFrame({
+                        'date': sentiment_data['date'],
+                        'sentiment_usd': 0.0,
+                        'sentiment_eur': 0.0,
+                        'sentiment_uah': 0.0
+                    })
                 
                 # Aggregate sentiment by date and region
                 sentiment_agg = sentiment_data.groupby(['date', 'Region']).agg({
@@ -267,6 +339,7 @@ class ImprovedCarryTradeModel:
             try:
                 # Price-based indicators
                 data['usd_sma_10'] = data['USD_UAH'].rolling(10).mean()
+                data['usd_sma_20'] = data['USD_UAH'].rolling(20).mean()
                 data['usd_sma_30'] = data['USD_UAH'].rolling(30).mean()
                 data['usd_ema_10'] = data['USD_UAH'].ewm(span=10).mean()
                 
@@ -460,11 +533,7 @@ class ImprovedCarryTradeModel:
         Train models for a single fold
         """
         # Create improved ensemble with stacking
-        base_models = [
-            ('rf', RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)),
-            ('xgb', xgb.XGBRegressor(n_estimators=100, random_state=42, n_jobs=-1, verbosity=0)),
-            ('lgb', lgb.LGBMRegressor(n_estimators=100, random_state=42, n_jobs=-1, verbosity=-1))
-        ]
+        base_models = self._build_base_models(n_estimators=100)
         
         meta_model = Ridge(alpha=1.0)
         
@@ -521,11 +590,7 @@ class ImprovedCarryTradeModel:
         print(f"📋 Selected {len(selected_features)} features: {selected_features}")
         
         # Create final ensemble models
-        base_models = [
-            ('rf', RandomForestRegressor(n_estimators=200, random_state=42, n_jobs=-1)),
-            ('xgb', xgb.XGBRegressor(n_estimators=200, random_state=42, n_jobs=-1, verbosity=0)),
-            ('lgb', lgb.LGBMRegressor(n_estimators=200, random_state=42, n_jobs=-1, verbosity=-1))
-        ]
+        base_models = self._build_base_models(n_estimators=200)
         
         meta_model = Ridge(alpha=1.0)
         

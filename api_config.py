@@ -12,25 +12,29 @@ class APIConfig:
         self.validate_keys()
     
     def validate_keys(self):
-        """Validate that all required API keys are present"""
-        required_keys = [
+        """Report optional API keys that are not configured."""
+        optional_keys = [
+            'NEWS_API_KEY',
             'ALPHA_VANTAGE_API_KEY',
             'FRED_API_KEY',
             'FIXER_API_KEY'
         ]
         
         missing_keys = []
-        for key in required_keys:
+        for key in optional_keys:
             if not os.getenv(key):
                 missing_keys.append(key)
         
         if missing_keys:
-            print(f"Missing API keys: {missing_keys}")
-            print("Please add them to your .env file")
+            print(f"Optional API keys not configured: {missing_keys}")
+            print("Add them to your .env file to enable those data sources.")
             return False
-        else:
-            print("All API keys configured successfully")
-            return True
+
+        print("All optional API keys configured successfully")
+        return True
+
+    def get_newsapi_key(self):
+        return os.getenv('NEWS_API_KEY')
     
     def get_alpha_vantage_key(self):
         return os.getenv('ALPHA_VANTAGE_API_KEY')

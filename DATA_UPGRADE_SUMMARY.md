@@ -177,7 +177,7 @@ When you run the enhanced scraper, you'll see:
 - `aiohttp`: For async operations (advanced version)
 
 #### API Keys Used:
-- Your existing NewsAPI key: `[REDACTED_NEWS_API_KEY]`
+- NewsAPI is optional and should be supplied through `NEWS_API_KEY` in a local `.env` file.
 - Free APIs: ExchangeRate-API, CurrencyAPI (no keys needed)
 - Yahoo Finance: Free (no key needed)
 

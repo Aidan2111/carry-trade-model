@@ -226,8 +226,7 @@ Data_Type_Checker.txt
 # Batch files (keep local only)
 *.bat
 
-# Package-lock files (keep only package.json)
-package-lock.json
+# Keep npm package-lock files for reproducible installs.
 yarn.lock
 
 # IDE files

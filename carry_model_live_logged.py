@@ -6,14 +6,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from sklearn.ensemble import RandomForestRegressor
-from newsapi import NewsApiClient
+from news_client import get_newsapi_client
 import yfinance as yf
 import os
 from datetime import datetime
 
 # Initialize
 analyzer = SentimentIntensityAnalyzer()
-newsapi = NewsApiClient(api_key='[REDACTED_NEWS_API_KEY]')
+newsapi = get_newsapi_client()
 today = datetime.today().strftime('%Y-%m-%d')
 
 # Create log folders if they don't exist
@@ -21,6 +21,10 @@ os.makedirs('logs', exist_ok=True)
 
 # Fetch headlines and sentiment
 def fetch_and_log_headlines(query, region):
+    if newsapi is None:
+        print(f"NEWS_API_KEY is not configured; skipping {region} headline fetch.")
+        return 0
+
     try:
         articles = newsapi.get_everything(q=query, language='en', sort_by='relevancy', page_size=10)
         data = []

@@ -4,6 +4,13 @@ Simple validation script to test basic functionality
 import sys
 print(f"Python version: {sys.version}")
 
+
+def optional_import_message(error):
+    message = str(error)
+    if 'libomp' in message:
+        return 'OpenMP runtime libomp is not installed; run `brew install libomp` on macOS to enable this model.'
+    return message.splitlines()[0] if message else error.__class__.__name__
+
 try:
     import pandas as pd
     print("✅ Pandas imported successfully")
@@ -25,14 +32,14 @@ except ImportError as e:
 try:
     import xgboost as xgb
     print("✅ XGBoost imported successfully")
-except ImportError as e:
-    print(f"❌ XGBoost import failed: {e}")
+except Exception as e:
+    print(f"⚠️ Optional XGBoost unavailable: {optional_import_message(e)}")
 
 try:
     import lightgbm as lgb
     print("✅ LightGBM imported successfully")
-except ImportError as e:
-    print(f"❌ LightGBM import failed: {e}")
+except Exception as e:
+    print(f"⚠️ Optional LightGBM unavailable: {optional_import_message(e)}")
 
 print("\n🧪 Testing basic functionality...")
 

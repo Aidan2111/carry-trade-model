@@ -67,7 +67,7 @@ const NewsCard: React.FC<Props> = ({ data }) => {
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse shadow-lg shadow-blue-500/50"></div>
-          <span className="text-xs text-blue-400 font-medium">LIVE FEED</span>
+          <span className="text-xs text-blue-400 font-medium">DATA FEED</span>
         </div>
       </div>
       

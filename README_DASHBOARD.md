@@ -58,7 +58,7 @@ A comprehensive real-time dashboard for carry trade modeling and analysis, featu
 
 ### Prerequisites
 - Python 3.8+
-- Node.js 16+
+- Node.js 20.19+ for the Vite dashboard
 - Virtual environment (recommended)
 
 ### Backend Setup
@@ -136,7 +136,7 @@ A comprehensive real-time dashboard for carry trade modeling and analysis, featu
 ### Environment Variables
 Create `.env` file in frontend directory:
 ```
-REACT_APP_API_URL=http://localhost:8000
+VITE_API_URL=http://localhost:8000
 REACT_APP_VERSION=1.0.0
 REACT_APP_ENVIRONMENT=development
 ```

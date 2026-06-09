@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 import numpy as np
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import yfinance as yf
-from newsapi import NewsApiClient
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -21,10 +20,8 @@ CORS(app)  # Enable CORS for all routes
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGS_DIR = os.path.join(BASE_DIR, 'logs')
 
-# Initialize sentiment analyzer and news API
+# Initialize sentiment analyzer. News data is read from local logs when present.
 analyzer = SentimentIntensityAnalyzer()
-NEWS_API_KEY = '[REDACTED_NEWS_API_KEY]'  # Your existing API key
-newsapi = NewsApiClient(api_key=NEWS_API_KEY) if NEWS_API_KEY else None
 
 print(f"Starting Carry Trade API server with REAL DATA...")
 print(f"Base directory: {BASE_DIR}")
@@ -127,6 +124,9 @@ class RealDataProvider:
             df = pd.read_csv(news_path)
             if df.empty:
                 return []
+
+            if not {'Region', 'Sentiment'}.issubset(df.columns):
+                return []
             
             # Get latest sentiment for each region
             sentiment_data = []
@@ -207,7 +207,6 @@ class RealDataProvider:
         try:
             perf_path = os.path.join(self.logs_dir, 'performance_log.csv')
             
-            # If performance log exists, use it
             if os.path.exists(perf_path):
                 df = pd.read_csv(perf_path)
                 if not df.empty:
@@ -223,25 +222,6 @@ class RealDataProvider:
                         'timestamp': datetime.now().isoformat()
                     }
             
-            # Calculate performance from FX data if no performance log
-            fx_data = self.get_latest_fx_rates()
-            if fx_data:
-                # Simple performance calculation based on recent changes
-                total_return = sum(rate['changePercent'] for rate in fx_data) / len(fx_data)
-                volatility = np.std([rate['changePercent'] for rate in fx_data])
-                sharpe_ratio = total_return / max(volatility, 0.01)
-                
-                return {
-                    'totalReturn': float(total_return * 30),  # Annualized estimate
-                    'sharpeRatio': float(sharpe_ratio),
-                    'maxDrawdown': float(-abs(total_return) * 2),
-                    'winRate': 60.0,
-                    'avgDailyReturn': float(total_return / 365),
-                    'volatility': float(volatility),
-                    'benchmark': 8.2,
-                    'timestamp': datetime.now().isoformat()
-                }
-            
             return None
             
         except Exception as e:
@@ -251,8 +231,8 @@ class RealDataProvider:
     def get_model_predictions(self):
         """Generate model predictions using your existing models"""
         try:
-            # This would ideally call your ensemble model
-            # For now, generate predictions based on recent data
+            # Deterministic research heuristic based on recent momentum and sentiment.
+            # Trained-model outputs should be added through a separate prediction file.
             fx_data = self.get_latest_fx_rates()
             sentiment_data = self.get_sentiment_data()
             
@@ -335,6 +315,10 @@ class RealDataProvider:
             
             df = pd.read_csv(news_path)
             if df.empty:
+                return []
+
+            required_columns = {'Headline', 'Sentiment', 'Date', 'Region'}
+            if not required_columns.issubset(df.columns):
                 return []
             
             # Get recent headlines (last 20)
@@ -444,4 +428,5 @@ if __name__ == '__main__':
     print(f"📰 News Data: {os.path.join(LOGS_DIR, 'news_log.csv')}")
     print(f"📊 Macro Data: {os.path.join(LOGS_DIR, 'macro')}")
     print("="*50)
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    debug_enabled = os.getenv('FLASK_DEBUG', '').lower() in {'1', 'true', 'yes'}
+    app.run(host='0.0.0.0', port=8000, debug=debug_enabled)

@@ -6,15 +6,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from sklearn.ensemble import RandomForestRegressor
-from newsapi import NewsApiClient
+from news_client import get_newsapi_client
 import yfinance as yf
 
 # --- Initialize sentiment analyzer and NewsAPI client ---
 analyzer = SentimentIntensityAnalyzer()
-newsapi = NewsApiClient(api_key='[REDACTED_NEWS_API_KEY]')  # Replace with your NewsAPI key
+newsapi = get_newsapi_client()
 
 # --- Function to fetch news headlines ---
 def fetch_headlines(query, language='en', max_articles=10):
+    if newsapi is None:
+        return []
+
     try:
         articles = newsapi.get_everything(q=query, language=language, sort_by='relevancy', page_size=max_articles)
         return [article['title'] for article in articles['articles']]

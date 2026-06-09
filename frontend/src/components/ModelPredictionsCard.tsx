@@ -31,24 +31,18 @@ const ModelPredictionsCard: React.FC<Props> = ({ data }) => {
     return '➡️';
   };
 
-  const getModelType = (pair: string) => {
-    // Simulate different model types for display
-    const models = ['Ensemble', 'XGBoost', 'LightGBM', 'Neural Net'];
-    return models[pair.length % models.length];
-  };
-
   return (
     <div className="trading-card group">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-            🤖 AI Predictions
+            🤖 Model Outputs
           </h3>
-          <p className="text-gray-400 text-sm">Machine learning forecasts</p>
+          <p className="text-gray-400 text-sm">Research forecasts from backend data</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-lg border border-blue-500/30 font-medium">
-            ML Models Active
+            API Output
           </div>
         </div>
       </div>
@@ -65,7 +59,7 @@ const ModelPredictionsCard: React.FC<Props> = ({ data }) => {
                   <div>
                     <div className="font-bold text-gray-100 text-lg">{prediction.pair}</div>
                     <div className="flex items-center gap-2 text-sm text-gray-400">
-                      <span>{getModelType(prediction.pair)}</span>
+                      <span>Backend forecast</span>
                       <span>•</span>
                       <span>{prediction.horizon}-day forecast</span>
                     </div>
