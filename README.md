@@ -64,6 +64,7 @@ Use these files first:
 - `enhanced_scraper_simple.py` - practical data collection script with optional NewsAPI usage.
 - `improved_ensemble_model.py` - improved model experiment with time-series validation and optional XGBoost/LightGBM support.
 - `tests/test_public_readiness.py` - release hygiene checks for secrets, dashboard data wiring, env docs, and README positioning.
+- `tests/test_model_validation.py` - model-theory checks: forward-looking target construction, no-skill-on-noise leakage detection, and planted-signal recovery.
 
 Several older scripts remain in the repo to show project history. Treat them as exploratory unless the README calls them out above.
 
@@ -130,11 +131,11 @@ VITE_API_URL=http://localhost:8000 npm start
 
 ## Verification
 
-Run the public-readiness checks:
+Run the public-readiness and model-validation checks:
 
 ```bash
 source .venv/bin/activate
-python -m unittest tests/test_public_readiness.py -v
+python -m unittest discover -s tests -v
 ```
 
 Run Python compile checks:

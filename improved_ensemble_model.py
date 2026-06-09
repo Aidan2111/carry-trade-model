@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore')
 
 # Core ML imports
 from sklearn.ensemble import RandomForestRegressor, StackingRegressor
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, RidgeCV
 from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.feature_selection import SelectKBest, f_regression, RFE
@@ -106,7 +106,11 @@ class ImprovedCarryTradeModel:
                 self._optional_model_warnings_printed.add('lightgbm')
 
         return models
-    
+
+    def _build_meta_model(self):
+        """Meta-learner for stacking with a data-driven regularization scale."""
+        return RidgeCV(alphas=np.logspace(-8, 2, 30))
+
     def load_and_prepare_data(self):
         """
         Load and prepare data with enhanced feature engineering
@@ -392,17 +396,18 @@ class ImprovedCarryTradeModel:
         key_columns = ['USD_UAH', 'EUR_UAH']
         data = data.dropna(subset=key_columns, how='all')
         
-        # Outlier detection using IQR method
+        # Outlier detection on daily moves. Levels are deliberately not capped:
+        # clipping a trending FX series with full-sample quantiles leaks future
+        # information into past rows and erases genuine regime shifts.
         for col in ['USD_UAH', 'EUR_UAH']:
             if col in data.columns:
-                Q1 = data[col].quantile(0.25)
-                Q3 = data[col].quantile(0.75)
-                IQR = Q3 - Q1
-                lower_bound = Q1 - 1.5 * IQR
-                upper_bound = Q3 + 1.5 * IQR
-                
-                # Cap outliers instead of removing them
-                data[col] = data[col].clip(lower_bound, upper_bound)
+                daily_move = data[col].pct_change().abs()
+                suspicious = daily_move > 0.25
+                if suspicious.any():
+                    print(
+                        f"⚠️ {col}: {suspicious.sum()} daily moves above 25%; "
+                        "verify these against the raw source"
+                    )
         
         # Check for data gaps
         data = data.sort_values('date')
@@ -459,7 +464,7 @@ class ImprovedCarryTradeModel:
         dates = data['date'][valid_indices]
         
         # Handle remaining NaN values in features
-        X = X.fillna(method='ffill').fillna(0)
+        X = X.ffill().fillna(0)
         
         print(f"✅ Feature preparation complete:")
         print(f"   📈 Features shape: {X.shape}")
@@ -475,8 +480,9 @@ class ImprovedCarryTradeModel:
         """
         print("⏰ Starting time series cross-validation...")
         
-        # Use TimeSeriesSplit for proper time series validation
-        tscv = TimeSeriesSplit(n_splits=5)
+        # Use TimeSeriesSplit with a purge gap matching the 7-day forward
+        # target so train-set targets cannot overlap the validation window.
+        tscv = TimeSeriesSplit(n_splits=5, gap=7)
         
         results = {
             'usd_scores': [],
@@ -534,8 +540,10 @@ class ImprovedCarryTradeModel:
         """
         # Create improved ensemble with stacking
         base_models = self._build_base_models(n_estimators=100)
-        
-        meta_model = Ridge(alpha=1.0)
+
+        # A fixed alpha=1.0 over-shrinks meta coefficients because FX returns
+        # have tiny variance; let RidgeCV pick a scale-appropriate penalty.
+        meta_model = self._build_meta_model()
         
         # Stacking ensemble
         stacked_usd = StackingRegressor(
@@ -591,8 +599,8 @@ class ImprovedCarryTradeModel:
         
         # Create final ensemble models
         base_models = self._build_base_models(n_estimators=200)
-        
-        meta_model = Ridge(alpha=1.0)
+
+        meta_model = self._build_meta_model()
         
         # Train USD model
         self.models['usd'] = StackingRegressor(

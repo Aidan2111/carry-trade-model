@@ -162,7 +162,6 @@ VITE_API_URL=http://127.0.0.1:8000
 ### Machine Learning Integration
 - **Scikit-learn** - ML models
 - **LightGBM/XGBoost** - Optional ensemble model dependencies
-- **SHAP** - Model explainability
 
 ## Development
 
