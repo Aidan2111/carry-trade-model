@@ -63,7 +63,7 @@ const NewsCard: React.FC<Props> = ({ data }) => {
           <h3 className="text-xl font-bold text-gray-100 flex items-center gap-2">
             📈 Market News
           </h3>
-          <p className="text-gray-400 text-sm">Live financial headlines</p>
+          <p className="text-gray-400 text-sm">Financial headlines from configured sources</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse shadow-lg shadow-blue-500/50"></div>
@@ -134,8 +134,8 @@ const NewsCard: React.FC<Props> = ({ data }) => {
       {data.length === 0 && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📰</div>
-          <div className="text-gray-400 font-medium">Loading market news...</div>
-          <div className="text-gray-500 text-sm mt-2">Scanning financial headlines worldwide</div>
+          <div className="text-gray-400 font-medium">No market news available</div>
+          <div className="text-gray-500 text-sm mt-2">Configure news sources or add a news log</div>
         </div>
       )}
     </div>

@@ -93,8 +93,8 @@ To test the improvements, you have **3 options**:
 
 #### **Option 1: Command Line Testing**
 ```bash
-cd "carry-trade-model"
-"python" test_improved_model.py
+cd carry-trade-model
+python test_improved_model.py
 ```
 
 #### **Option 2: Jupyter Notebook Testing**

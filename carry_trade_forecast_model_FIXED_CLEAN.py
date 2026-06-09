@@ -211,7 +211,7 @@ data_test["benchmark_eur"] = (1 + data_test["eur_return"]).cumprod() * capital
 
 # === Export Selected Columns to CSV ===
 export_cols = ["date", "strategy_usd", "benchmark_usd", "strategy_eur", "benchmark_eur"]
-data_test[export_cols].to_csv(r"C:\\Users\\Aidan\\carry_trade_model\\logs\\performance_log.csv", index=False)
+data_test[export_cols].to_csv(os.path.join("logs", "performance_log.csv"), index=False)
 
 # === Unified Plot (Single Graph for Both Pairs) ===
 plt.figure(figsize=(14, 7))
@@ -265,7 +265,7 @@ for days in forecast_horizons:
 
 # === Save Forecasts to CSV ===
 forecast_df = pd.DataFrame(forecast_results)
-forecast_path = r"C:\\Users\\Aidan\\carry_trade_model\\logs\\performance_log.csv"
+forecast_path = os.path.join("logs", "performance_log.csv")
 
 try:
     existing_log = pd.read_csv(forecast_path)
@@ -277,7 +277,6 @@ updated_log.to_csv(forecast_path, index=False)
 
 print("\n=== Forecasts Exported ===")
 print(forecast_df.to_string(index=False))
-
 
 
 

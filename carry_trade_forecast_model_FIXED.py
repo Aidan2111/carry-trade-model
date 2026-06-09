@@ -86,7 +86,7 @@ data_test["benchmark_eur"] = (1 + data_test["eur_return"]).cumprod() * capital
 
 # --- Export to CSV ---
 export_cols = ["date", "strategy_usd", "strategy_eur", "benchmark_usd", "benchmark_eur"]
-export_path = r"carry-trade-model\logs\performance_log.csv"
+export_path = os.path.join("logs", "performance_log.csv")
 data_test[export_cols].to_csv(export_path, index=False)
 
 # --- Forecast Future ---
@@ -108,7 +108,7 @@ for days in future_days:
     })
 
 forecast_df = pd.DataFrame(forecast_rows)
-forecast_df.to_csv(r"carry-trade-model\logs\forecast_log.csv", index=False)
+forecast_df.to_csv(os.path.join("logs", "forecast_log.csv"), index=False)
 
 # --- Plotting ---
 plt.figure(figsize=(12, 6))

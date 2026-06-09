@@ -1,55 +1,63 @@
+"""Optional premium data client for higher-quality research inputs.
 
-# production_api_client.py
-# Production-ready API client with real financial data sources
+The main project can run without this file. Use it when you have paid or
+premium API credentials and a trained model artifact available locally.
+"""
 
 import os
-import requests
-import pandas as pd
-import yfinance as yf
-from fredapi import Fred
-from dotenv import load_dotenv
 import pickle
+from typing import Dict, Optional
+
+import pandas as pd
+import requests
+from dotenv import load_dotenv
+from fredapi import Fred
+
 
 class ProductionAPIClient:
-    """Production API client with real data sources"""
+    """Premium API client with real financial data sources."""
 
-    def __init__(self):
-        # Load environment variables
+    def __init__(self, model_path: str = "integrated_models/integrated_enhanced_model.pkl"):
         load_dotenv()
-
-        # Initialize API clients
-        self.fred = Fred(api_key=os.getenv('FRED_API_KEY'))
-        self.alpha_vantage_key = os.getenv('ALPHA_VANTAGE_API_KEY')
-        self.fixer_key = os.getenv('FIXER_API_KEY')
-
-        # Load the saved model
+        self.fred_key = os.getenv("FRED_API_KEY")
+        self.fixer_key = os.getenv("FIXER_API_KEY")
+        self.model_path = model_path
+        self.fred = Fred(api_key=self.fred_key) if self.fred_key else None
         self.model_package = self.load_model()
 
     def load_model(self):
-        """Load the saved integrated model"""
-        model_path = "integrated_models/integrated_enhanced_model.pkl"
-        with open(model_path, 'rb') as f:
+        """Load a local model artifact when one exists."""
+        if not os.path.exists(self.model_path):
+            return None
+
+        with open(self.model_path, "rb") as f:
             return pickle.load(f)
 
-    def get_real_forex_rates(self):
-        """Get real forex rates from Fixer.io"""
-        url = f"http://data.fixer.io/api/latest"
-        params = {
-            'access_key': self.fixer_key,
-            'base': 'USD',
-            'symbols': 'EUR,GBP,JPY,AUD,CAD,CHF,NZD'
-        }
-        response = requests.get(url, params=params)
-        if response.status_code == 200:
-            return response.json()['rates']
-        return None
+    def get_real_forex_rates(self) -> Optional[Dict[str, float]]:
+        """Get real forex rates from Fixer over HTTPS when configured."""
+        if not self.fixer_key:
+            return None
 
-    def get_real_interest_rates(self):
-        """Get real interest rates from FRED"""
+        url = "https://data.fixer.io/api/latest"
+        params = {
+            "access_key": self.fixer_key,
+            "base": "USD",
+            "symbols": "EUR,GBP,JPY,AUD,CAD,CHF,NZD",
+        }
+        response = requests.get(url, params=params, timeout=15)
+        response.raise_for_status()
+        payload = response.json()
+        return payload.get("rates")
+
+    def get_real_interest_rates(self) -> Dict[str, float]:
+        """Get real interest rates from FRED when configured."""
+        if not self.fred:
+            return {}
+
         series = {
-            'US_FedFunds': 'FEDFUNDS',
-            'EU_Rate': 'ECBMRRFR',
-            'UK_Rate': 'GBRONTD156N'
+            "US_FedFunds": "FEDFUNDS",
+            "EU_Rate": "ECBMRRFR",
+            "UK_Rate": "GBRONTD156N",
         }
 
         rates = {}
@@ -57,17 +65,20 @@ class ProductionAPIClient:
             try:
                 data = self.fred.get_series(series_id, limit=1)
                 rates[name] = float(data.iloc[-1])
-            except:
-                rates[name] = 0.0
+            except Exception:
+                continue
 
         return rates
 
-    def get_real_economic_data(self):
-        """Get real economic indicators"""
+    def get_real_economic_data(self) -> Dict[str, float]:
+        """Get real economic indicators from FRED when configured."""
+        if not self.fred:
+            return {}
+
         indicators = {
-            'US_CPI': 'CPIAUCSL',
-            'US_Unemployment': 'UNRATE',
-            'US_GDP': 'GDP'
+            "US_CPI": "CPIAUCSL",
+            "US_Unemployment": "UNRATE",
+            "US_GDP": "GDP",
         }
 
         data = {}
@@ -75,28 +86,28 @@ class ProductionAPIClient:
             try:
                 series_data = self.fred.get_series(series_id, limit=1)
                 data[name] = float(series_data.iloc[-1])
-            except:
-                data[name] = 0.0
+            except Exception:
+                continue
 
         return data
 
     def make_prediction(self):
-        """Make prediction using real data and saved model"""
-        # Get real data
-        forex = self.get_real_forex_rates()
+        """Make a prediction when real inputs and a local model are available."""
+        if not self.model_package:
+            return None
+
+        forex = self.get_real_forex_rates() or {}
         rates = self.get_real_interest_rates()
         economic = self.get_real_economic_data()
-
-        # Create feature vector (you'll need to adapt this to your features)
         features = {**forex, **rates, **economic}
+        if not features:
+            return None
+
         feature_df = pd.DataFrame([features])
+        model = self.model_package["model"]
+        return model.predict_with_risk_management(feature_df)
 
-        # Use saved model for prediction
-        model = self.model_package['model']
-        prediction_result = model.predict_with_risk_management(feature_df)
 
-        return prediction_result
-
-# Example usage:
-# client = ProductionAPIClient()
-# prediction = client.make_prediction()
+if __name__ == "__main__":
+    client = ProductionAPIClient()
+    print(client.make_prediction())

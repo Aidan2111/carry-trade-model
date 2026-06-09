@@ -1,13 +1,13 @@
 """
-IMMEDIATE UPGRADE: Enhanced Auto-Scraper for Your Carry Trade Model
-==================================================================
+Enhanced Auto-Scraper for Carry Trade Model
+==========================================
 
-This script directly improves your current data collection by:
+This script improves local data collection by:
 1. Adding multiple FX data sources with fallbacks
 2. Enhancing news collection with free RSS feeds
 3. Implementing real-time macro data
 4. Adding automatic scheduling and error handling
-5. Maintaining your existing CSV file formats
+5. Maintaining the expected CSV file formats
 
 USAGE:
 - Run once: python enhanced_scraper_simple.py --once
@@ -46,7 +46,7 @@ class SimpleEnhancedScraper:
         self.newsapi = get_newsapi_client()
         self.analyzer = SentimentIntensityAnalyzer()
         
-        # FX pairs from your CSV files
+        # FX pairs from local CSV files
         self.fx_pairs = {
             'USD_UAH': 'USDUAH=X',
             'EUR_UAH': 'EURUAH=X'
@@ -56,7 +56,7 @@ class SimpleEnhancedScraper:
         self.running = False
         self.last_update = {}
         
-        print("Enhanced Scraper initialized - Ready to upgrade your data!")
+        print("Enhanced Scraper initialized - ready for local data collection.")
     
     def get_multi_source_fx_data(self):
         """Enhanced FX collection with multiple sources"""
@@ -77,7 +77,7 @@ class SimpleEnhancedScraper:
     def _get_fx_rate_multi_source(self, pair_name: str, yahoo_symbol: str) -> Optional[float]:
         """Try multiple sources for FX rates"""
         
-        # Source 1: Yahoo Finance (your current method)
+        # Source 1: Yahoo Finance
         try:
             ticker = yf.Ticker(yahoo_symbol)
             # Try recent data first
@@ -105,13 +105,14 @@ class SimpleEnhancedScraper:
         except Exception as e:
             print(f"     ⚠️ ExchangeRate-API failed: {str(e)[:50]}...")
         
-        # Source 3: CurrencyAPI (another free option)
+        # Source 3: CurrencyAPI (optional free/paid key)
         try:
-            if '_' in pair_name:
+            currency_api_key = os.getenv('CURRENCY_API_KEY')
+            if currency_api_key and '_' in pair_name:
                 base, quote = pair_name.split('_')
                 url = f"https://api.currencyapi.com/v3/latest"
                 params = {
-                    'apikey': 'CURRENCY_API_KEY',  # Free tier key
+                    'apikey': currency_api_key,
                     'base_currency': base,
                     'currencies': quote
                 }
@@ -124,63 +125,28 @@ class SimpleEnhancedScraper:
                         rate = float(rates[quote]['value'])
                         print(f"     🎯 CurrencyAPI: {rate:.4f}")
                         return rate
+            elif not currency_api_key:
+                print("     ℹ️ CurrencyAPI skipped: CURRENCY_API_KEY not configured")
         except Exception as e:
             print(f"     ⚠️ CurrencyAPI failed: {str(e)[:50]}...")
-        
-        # Source 4: Historical extrapolation (fallback)
-        try:
-            rate = self._extrapolate_from_your_csv(pair_name)
-            if rate:
-                print(f"     🎯 Historical extrapolation: {rate:.4f}")
-                return rate
-        except Exception as e:
-            print(f"     ⚠️ Historical fallback failed: {str(e)[:50]}...")
-        
-        return None
-    
-    def _extrapolate_from_your_csv(self, pair_name: str) -> Optional[float]:
-        """Use your existing CSV data to extrapolate current rate"""
-        try:
-            # Load your existing historical data
-            csv_name = pair_name.replace('_', '/') + " Historical Data.csv"
-            csv_path = os.path.join(self.fx_dir, csv_name)
-            
-            if os.path.exists(csv_path):
-                df = pd.read_csv(csv_path)
-                if len(df) > 1:
-                    # Get latest rate and recent volatility
-                    latest_rate = float(df.iloc[0]['Price'])
-                    
-                    # Calculate recent volatility from your data
-                    recent_prices = df.head(10)['Price'].astype(float)
-                    returns = recent_prices.pct_change().dropna()
-                    volatility = returns.std() if len(returns) > 0 else 0.002
-                    
-                    # Generate realistic current rate
-                    random_change = np.random.normal(0, volatility)
-                    current_rate = latest_rate * (1 + random_change)
-                    
-                    return current_rate
-        except Exception:
-            pass
         
         return None
     
     def _update_fx_historical_csv(self, pair_name: str, rate: float):
-        """Update your existing historical CSV files"""
+        """Update local historical CSV files."""
         try:
-            # Convert pair name to match your CSV filename format
+            # Convert pair name to match the CSV filename format.
             csv_name = pair_name.replace('_', '/') + " Historical Data.csv"
             csv_path = os.path.join(self.fx_dir, csv_name)
             
-            # Create new row in your exact CSV format
+            # Create a new row in the expected CSV format.
             now = datetime.now()
             new_row = {
                 'Date': now.strftime('%m/%d/%Y'),
                 'Price': f"{rate:.4f}",
-                'Open': f"{rate * (1 + np.random.uniform(-0.0005, 0.0005)):.4f}",
-                'High': f"{rate * (1 + abs(np.random.uniform(0, 0.001))):.4f}",
-                'Low': f"{rate * (1 - abs(np.random.uniform(0, 0.001))):.4f}",
+                'Open': f"{rate:.4f}",
+                'High': f"{rate:.4f}",
+                'Low': f"{rate:.4f}",
                 'Vol.': "",
                 'Change %': "0.00%"
             }
@@ -193,7 +159,7 @@ class SimpleEnhancedScraper:
                     change_pct = ((rate - prev_price) / prev_price) * 100
                     new_row['Change %'] = f"{change_pct:+.2f}%"
                 
-                # Add new row at top (most recent first, like your format)
+                # Add new row at top with most recent data first.
                 updated_df = pd.concat([pd.DataFrame([new_row]), existing_df], ignore_index=True)
             else:
                 updated_df = pd.DataFrame([new_row])
@@ -205,7 +171,7 @@ class SimpleEnhancedScraper:
             print(f"     ❌ CSV update failed: {e}")
     
     def get_enhanced_news_data(self):
-        """Enhanced news collection using free RSS feeds + your NewsAPI"""
+        """Enhanced news collection using free RSS feeds and optional NewsAPI."""
         print(f"\n📰 Collecting enhanced news at {datetime.now().strftime('%H:%M:%S')}")
         
         all_articles = []
@@ -215,7 +181,7 @@ class SimpleEnhancedScraper:
         all_articles.extend(rss_articles)
         print(f"   📡 RSS feeds: {len(rss_articles)} articles")
         
-        # Method 2: Your existing NewsAPI (with smart rate limiting)
+        # Method 2: Optional NewsAPI with smart rate limiting
         try:
             api_articles = self._get_smart_newsapi()
             all_articles.extend(api_articles)
@@ -223,9 +189,9 @@ class SimpleEnhancedScraper:
         except Exception as e:
             print(f"   ⚠️ NewsAPI limited: {str(e)[:50]}...")
         
-        # Process and update your news_log.csv
+        # Process and update news_log.csv
         if all_articles:
-            processed = self._process_news_like_your_system(all_articles)
+            processed = self._process_news_for_local_csv(all_articles)
             print(f"   ✅ Saved {len(processed)} articles to news_log.csv")
     
     def _get_rss_news(self) -> List[Dict]:
@@ -274,7 +240,7 @@ class SimpleEnhancedScraper:
         return articles
     
     def _get_smart_newsapi(self) -> List[Dict]:
-        """Use your NewsAPI with smart rate limiting"""
+        """Use optional NewsAPI with smart rate limiting."""
         if self.newsapi is None:
             return []
 
@@ -313,8 +279,8 @@ class SimpleEnhancedScraper:
         
         return articles
     
-    def _process_news_like_your_system(self, articles: List[Dict]) -> List[Dict]:
-        """Process news using your existing sentiment and region classification"""
+    def _process_news_for_local_csv(self, articles: List[Dict]) -> List[Dict]:
+        """Process news using local sentiment and region classification."""
         processed = []
         
         for article in articles:
@@ -322,12 +288,12 @@ class SimpleEnhancedScraper:
             if len(title) < 10:
                 continue
             
-            # Use your exact region classification logic
-            region = self._classify_region_like_yours(title)
+            # Use the project region classification logic
+            region = self._classify_region_for_project(title)
             if not region:
                 continue
             
-            # Calculate sentiment like your system
+            # Calculate headline sentiment for the local CSV schema
             sentiment = self.analyzer.polarity_scores(title)['compound']
             
             processed.append({
@@ -337,17 +303,17 @@ class SimpleEnhancedScraper:
                 'Sentiment': sentiment
             })
         
-        # Update your news_log.csv in the same format
+        # Update news_log.csv in the expected format
         if processed:
-            self._update_your_news_csv(processed)
+            self._update_local_news_csv(processed)
         
         return processed
     
-    def _classify_region_like_yours(self, text: str) -> Optional[str]:
-        """Use your exact region classification logic"""
+    def _classify_region_for_project(self, text: str) -> Optional[str]:
+        """Use the project region classification logic."""
         text = text.lower()
         
-        # Your exact keywords from process_headlines_real.py
+        # Keywords adapted from process_headlines_real.py
         if any(w in text for w in ["fed", "us", "dollar", "powell", "america"]):
             return "USD"
         elif any(w in text for w in ["euro", "ecb", "eu", "germany", "france", "europa"]):
@@ -357,8 +323,8 @@ class SimpleEnhancedScraper:
         
         return None
     
-    def _update_your_news_csv(self, news_items: List[Dict]):
-        """Update your existing news_log.csv file"""
+    def _update_local_news_csv(self, news_items: List[Dict]):
+        """Update the local news_log.csv file."""
         try:
             news_csv = os.path.join(self.log_dir, 'news_log.csv')
             
@@ -377,14 +343,14 @@ class SimpleEnhancedScraper:
             else:
                 combined_df = new_df
             
-            # Save in your exact format
+            # Save in the expected format.
             combined_df[['Date', 'Region', 'Headline', 'Sentiment']].to_csv(news_csv, index=False)
             
         except Exception as e:
             print(f"     ❌ News CSV update failed: {e}")
     
     def get_real_time_macro_data(self):
-        """Get real-time macro data to update your CSV files"""
+        """Get real-time macro data to update local CSV files."""
         print(f"\n📊 Collecting macro data at {datetime.now().strftime('%H:%M:%S')}")
         
         # Get Treasury yields
@@ -393,10 +359,10 @@ class SimpleEnhancedScraper:
         # Get Fed Funds estimate
         fed_data = self._get_fed_funds_estimate()
         
-        # Update your macro CSV files
+        # Update local macro CSV files.
         all_macro = {**treasury_data, **fed_data}
         if all_macro:
-            self._update_your_macro_csvs(all_macro)
+            self._update_local_macro_csvs(all_macro)
             print(f"   ✅ Updated {len(all_macro)} macro indicators")
     
     def _get_live_treasury_yields(self) -> Dict:
@@ -446,23 +412,15 @@ class SimpleEnhancedScraper:
                 }
                 print(f"   🏦 Fed Funds (est): {fed_rate:.2f}%")
             else:
-                # Fallback: Use recent known rate with small variation
-                base_rate = 5.25  # Current approximate rate
-                estimated_rate = base_rate + np.random.normal(0, 0.05)
-                
-                fed_data['US_FedFunds'] = {
-                    'date': datetime.now().strftime('%Y-%m-%d'),
-                    'value': estimated_rate
-                }
-                print(f"   🏦 Fed Funds (simulated): {estimated_rate:.2f}%")
+                print("   ℹ️ Fed Funds unavailable from free futures proxy")
                 
         except Exception as e:
             print(f"   ⚠️ Fed Funds failed: {str(e)[:30]}...")
         
         return fed_data
     
-    def _update_your_macro_csvs(self, macro_data: Dict):
-        """Update your existing macro CSV files"""
+    def _update_local_macro_csvs(self, macro_data: Dict):
+        """Update local macro CSV files."""
         try:
             for indicator, data in macro_data.items():
                 csv_path = os.path.join(self.macro_dir, f"{indicator}.csv")
@@ -473,7 +431,7 @@ class SimpleEnhancedScraper:
                     indicator: data['value']
                 }
                 
-                # Update CSV in your format
+                # Update CSV in the expected format
                 if os.path.exists(csv_path):
                     existing_df = pd.read_csv(csv_path)
                     updated_df = pd.concat([pd.DataFrame([new_row]), existing_df], ignore_index=True)
@@ -500,7 +458,7 @@ class SimpleEnhancedScraper:
             self.get_real_time_macro_data()
             
             print("\n✅ Enhanced collection completed!")
-            print("📁 Check your CSV files - they should have new real-time data")
+            print("📁 Check local CSV files for newly collected data.")
             
         elif mode == 'auto':
             print("\n🔄 Starting CONTINUOUS enhanced collection...")
@@ -558,12 +516,12 @@ def main():
     
     print("ENHANCED AUTO-SCRAPER FOR CARRY TRADE MODEL")
     print("=" * 60)
-    print("This UPGRADES your current data collection with:")
+    print("This collects configured real data with:")
     print("✅ Multi-source FX rates (3+ sources per pair)")
-    print("✅ Enhanced news (free RSS + your NewsAPI)")
+    print("✅ Enhanced news (free RSS + optional NewsAPI)")
     print("✅ Real-time macro data (Treasury yields, Fed Funds)")
     print("✅ Automatic fallbacks and error handling")
-    print("✅ Updates your existing CSV files seamlessly")
+    print("✅ Updates local CSV files")
     print("=" * 60)
     
     # Check command line arguments

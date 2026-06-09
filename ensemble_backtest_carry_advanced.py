@@ -209,7 +209,7 @@ data_test["benchmark_eur"] = (1 + data_test["eur_return"]).cumprod() * capital
 
 # === Export Selected Columns to CSV ===
 export_cols = ["date", "strategy_usd", "benchmark_usd", "strategy_eur", "benchmark_eur"]
-data_test[export_cols].to_csv(r"carry-trade-model\logs\performance_log.csv", index=False)
+data_test[export_cols].to_csv(os.path.join("logs", "performance_log.csv"), index=False)
 
 # === Plotting (Full Range) ===
 plt.figure(figsize=(12, 6))
@@ -274,7 +274,7 @@ for days in forecast_horizons:
 
 # === Save Forecasts to CSV ===
 forecast_df = pd.DataFrame(forecast_results)
-forecast_path = r"carry-trade-model\logs\performance_log.csv"
+forecast_path = os.path.join("logs", "performance_log.csv")
 
 # Read existing log if exists, otherwise create new
 try:

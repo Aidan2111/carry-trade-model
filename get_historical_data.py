@@ -6,8 +6,8 @@ from news_client import get_newsapi_client
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import yfinance as yf
 
-# --- Setup directories using absolute paths ---
-base_dir = r"carry-trade-model"
+# --- Setup directories using repo-relative paths ---
+base_dir = os.getenv("CARRY_TRADE_MODEL_DIR", os.path.dirname(os.path.abspath(__file__)))
 log_dir = os.path.join(base_dir, "logs")
 macro_dir = os.path.join(log_dir, "macro")
 fx_dir = os.path.join(log_dir, "fx")
@@ -80,4 +80,3 @@ else:
 # --- Save updated news log ---
 combined_news.to_csv(news_log_path, index=False)
 print(f"Updated news log saved to {news_log_path}")
-

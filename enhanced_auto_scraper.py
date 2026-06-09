@@ -2,22 +2,22 @@
 Enhanced Auto-Scraper for Carry Trade Model
 ==========================================
 
-This is an improved version of your current data collection system that:
+This is an improved version of the local data collection system that:
 - Uses multiple free data sources for reliability
 - Implements smart fallback mechanisms
 - Automatically schedules data collection
 - Validates and cleans data
-- Updates your existing CSV files
+- Updates local CSV files
 - Provides real-time monitoring
 
-UPGRADE FROM YOUR CURRENT SYSTEM:
+LOCAL DATA COLLECTION FEATURES:
 ✅ Multi-source FX data (Yahoo, Free APIs, Web scraping)
 ✅ Enhanced news collection (RSS + NewsAPI)
 ✅ Real-time macro data feeds
 ✅ Automatic error handling and retries
 ✅ Data validation and gap filling
 ✅ Background scheduling
-✅ Maintains your existing CSV format
+✅ Maintains the expected CSV format
 """
 
 import pandas as pd
@@ -38,8 +38,8 @@ import schedule
 
 class EnhancedDataScraper:
     def __init__(self):
-        # Setup paths (same as your current system)
-        self.base_dir = r"carry-trade-model"
+        # Setup paths using the repo root by default.
+        self.base_dir = os.getenv("CARRY_TRADE_MODEL_DIR", os.path.dirname(os.path.abspath(__file__)))
         self.log_dir = os.path.join(self.base_dir, "logs")
         self.fx_dir = os.path.join(self.log_dir, "fx")
         self.macro_dir = os.path.join(self.log_dir, "macro")
@@ -56,7 +56,7 @@ class EnhancedDataScraper:
         # Setup logging
         self.setup_logging()
         
-        # FX pairs to track (based on your CSV files)
+        # FX pairs to track based on local CSV files.
         self.fx_pairs = {
             'USD_UAH': 'USDUAH=X',
             'EUR_UAH': 'EURUAH=X',
@@ -116,7 +116,7 @@ class EnhancedDataScraper:
     def _get_fx_rate_with_fallback(self, pair_name: str, yahoo_symbol: str) -> Optional[float]:
         """Get FX rate with multiple fallback sources"""
         
-        # Source 1: Yahoo Finance (your current source)
+        # Source 1: Yahoo Finance.
         try:
             ticker = yf.Ticker(yahoo_symbol)
             hist = ticker.history(period='1d', interval='5m')
@@ -143,55 +143,27 @@ class EnhancedDataScraper:
         try:
             if '_' in pair_name:
                 base, quote = pair_name.split('_')
-                # Note: You'd need to sign up for a free API key at fixer.io
-                # url = f"http://data.fixer.io/api/latest?access_key=YOUR_KEY&base={base}&symbols={quote}"
+                # Configure FIXER_API_KEY before enabling this provider.
         except:
             pass
-        
-        # Source 4: Historical data extrapolation (last resort)
-        try:
-            return self._extrapolate_from_historical(pair_name)
-        except Exception as e:
-            self.logger.error(f"All sources failed for {pair_name}: {e}")
-        
-        return None
-    
-    def _extrapolate_from_historical(self, pair_name: str) -> Optional[float]:
-        """Extrapolate current rate from your historical CSV data"""
-        try:
-            csv_file = os.path.join(self.fx_dir, f"{pair_name.replace('_', '/')} Historical Data.csv")
-            
-            if os.path.exists(csv_file):
-                df = pd.read_csv(csv_file)
-                if not df.empty:
-                    # Get latest rate and add realistic intraday movement
-                    latest_rate = float(df.iloc[0]['Price'])  # Most recent is at top
-                    
-                    # Add small random walk (typical intraday volatility: 0.1-0.5%)
-                    daily_vol = 0.002  # 0.2% daily volatility
-                    random_change = np.random.normal(0, daily_vol)
-                    
-                    return latest_rate * (1 + random_change)
-        except Exception as e:
-            self.logger.warning(f"Historical extrapolation failed for {pair_name}: {e}")
         
         return None
     
     def _update_fx_csv(self, pair_name: str, rate: float):
-        """Update your existing FX CSV files with new data"""
+        """Update local FX CSV files with new data."""
         try:
-            # Convert pair name to match your CSV filename format
+            # Convert pair name to match the CSV filename format.
             csv_name = pair_name.replace('_', '/') + " Historical Data.csv"
             csv_path = os.path.join(self.fx_dir, csv_name)
             
-            # Create new row in your CSV format
+            # Create a new row in the expected CSV format.
             now = datetime.now()
             new_row = {
                 'Date': now.strftime('%m/%d/%Y'),
                 'Price': rate,
-                'Open': rate * (1 + np.random.uniform(-0.001, 0.001)),  # Realistic open
-                'High': rate * (1 + abs(np.random.uniform(0, 0.002))),   # Realistic high
-                'Low': rate * (1 - abs(np.random.uniform(0, 0.002))),    # Realistic low
+                'Open': rate,
+                'High': rate,
+                'Low': rate,
                 'Vol.': '',
                 'Change %': '0.00%'  # Will calculate below
             }
@@ -309,7 +281,7 @@ class EnhancedDataScraper:
         return news_items
     
     def _process_and_save_news(self, news_items: List[Dict]) -> List[Dict]:
-        """Process sentiment and save to your news_log.csv format"""
+        """Process sentiment and save to the news_log.csv format."""
         processed_news = []
         
         for item in news_items:
@@ -318,7 +290,7 @@ class EnhancedDataScraper:
                 if not title or len(title) < 10:
                     continue
                 
-                # Classify region (same logic as your process_headlines_real.py)
+                # Classify region using the project headline logic.
                 region = self._classify_region(title)
                 if not region:
                     continue
@@ -338,14 +310,14 @@ class EnhancedDataScraper:
             except Exception as e:
                 self.logger.warning(f"Error processing news: {e}")
         
-        # Update your existing news_log.csv
+        # Update local news_log.csv.
         if processed_news:
             self._update_news_csv(processed_news)
         
         return processed_news
     
     def _classify_region(self, text: str) -> Optional[str]:
-        """Classify news by region (same as your existing logic)"""
+        """Classify news by region."""
         text = text.lower()
         
         if any(w in text for w in ["fed", "us", "dollar", "powell", "america", "federal reserve"]):
@@ -358,7 +330,7 @@ class EnhancedDataScraper:
         return None
     
     def _update_news_csv(self, news_items: List[Dict]):
-        """Update your existing news_log.csv file"""
+        """Update the local news_log.csv file."""
         try:
             news_csv_path = os.path.join(self.log_dir, 'news_log.csv')
             
@@ -378,7 +350,7 @@ class EnhancedDataScraper:
             else:
                 combined_df = new_df
             
-            # Save in your existing format
+            # Save in the expected format.
             combined_df[['Date', 'Region', 'Headline', 'Sentiment']].to_csv(news_csv_path, index=False)
             
         except Exception as e:
@@ -433,30 +405,11 @@ class EnhancedDataScraper:
         return treasury_data
     
     def _get_economic_indicators(self) -> Dict:
-        """Get economic indicators (simplified for demo)"""
-        econ_data = {}
-        
-        try:
-            # For demo purposes, simulate Fed Funds rate with realistic variation
-            # In production, you'd scrape from Fed website or use FRED API
-            
-            base_fed_rate = 5.25  # Current approximate Fed Funds rate
-            fed_rate = base_fed_rate + np.random.normal(0, 0.05)  # Small variation
-            
-            econ_data['US_FedFunds'] = {
-                'date': datetime.now().strftime('%Y-%m-%d'),
-                'value': fed_rate
-            }
-            
-            # Add more indicators as needed...
-            
-        except Exception as e:
-            self.logger.error(f"Economic indicators failed: {e}")
-        
-        return econ_data
+        """Get economic indicators when real sources are configured."""
+        return {}
     
     def _update_macro_csvs(self, macro_data: Dict):
-        """Update your macro CSV files"""
+        """Update local macro CSV files."""
         try:
             for indicator, data in macro_data.items():
                 csv_path = os.path.join(self.macro_dir, f"{indicator}.csv")
@@ -542,13 +495,13 @@ if __name__ == "__main__":
     
     print("🔄 Enhanced Data Scraper for Carry Trade Model")
     print("=" * 60)
-    print("This replaces and enhances your current data collection with:")
+    print("This collects configured real data with:")
     print("✅ Multiple data sources with automatic fallbacks")
     print("✅ Real-time FX rates from 3+ sources")
     print("✅ Enhanced news from RSS + NewsAPI")
     print("✅ Real-time macro data feeds")
     print("✅ Automatic scheduling and error handling")
-    print("✅ Updates your existing CSV files")
+    print("✅ Updates local CSV files")
     print("=" * 60)
     
     # Ask user for mode

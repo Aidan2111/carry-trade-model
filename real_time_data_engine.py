@@ -34,7 +34,10 @@ import schedule
 # Configuration
 @dataclass
 class DataConfig:
-    base_dir: str = r"carry-trade-model"
+    base_dir: str = os.getenv(
+        "CARRY_TRADE_MODEL_DIR",
+        os.path.dirname(os.path.abspath(__file__))
+    )
     update_intervals: Dict[str, int] = None  # seconds
     api_keys: Dict[str, str] = None
     data_sources: Dict[str, List[str]] = None
@@ -51,9 +54,9 @@ class DataConfig:
         if self.api_keys is None:
             self.api_keys = {
                 'newsapi': os.getenv('NEWS_API_KEY'),
-                'alpha_vantage': 'your_alpha_vantage_key',  # Free: https://www.alphavantage.co/
-                'fred': 'your_fred_key',  # Free: https://fred.stlouisfed.org/
-                'fxrates': 'your_fxrates_key'  # Free tier available
+                'alpha_vantage': os.getenv('ALPHA_VANTAGE_API_KEY'),
+                'fred': os.getenv('FRED_API_KEY'),
+                'fxrates': os.getenv('FXRATES_API_KEY')
             }
         
         if self.data_sources is None:
@@ -179,9 +182,7 @@ class FXDataCollector:
         
         # Source 2: Alpha Vantage (if key available)
         try:
-            if self.engine.config.api_keys.get('alpha_vantage', '').startswith('your_'):
-                pass  # Skip if demo key
-            else:
+            if self.engine.config.api_keys.get('alpha_vantage'):
                 rate = await self._get_alpha_vantage_rate(pair)
                 if rate:
                     return rate
@@ -195,12 +196,6 @@ class FXDataCollector:
                 return rate
         except Exception as e:
             self.logger.warning(f"ExchangeRate API failed for {pair}: {e}")
-        
-        # Source 4: Historical data extrapolation
-        try:
-            return self._extrapolate_from_historical(pair)
-        except Exception as e:
-            self.logger.error(f"All FX sources failed for {pair}: {e}")
         
         return None
     
@@ -227,7 +222,7 @@ class FXDataCollector:
         base, quote = pair.split('/')
         api_key = self.engine.config.api_keys.get('alpha_vantage')
         
-        if not api_key or api_key.startswith('your_'):
+        if not api_key:
             return None
             
         url = f"https://www.alphavantage.co/query"
@@ -248,26 +243,6 @@ class FXDataCollector:
                         return float(rate_str)
         return None
     
-    def _extrapolate_from_historical(self, pair: str) -> Optional[float]:
-        """Extrapolate current rate from historical data"""
-        try:
-            # Load historical data
-            filename = pair.replace('/', '_') + " Historical Data.csv"
-            file_path = os.path.join(self.engine.log_dir, 'fx', filename)
-            
-            if os.path.exists(file_path):
-                df = pd.read_csv(file_path)
-                if not df.empty:
-                    # Get latest price and add some realistic volatility
-                    latest_price = float(df.iloc[0]['Price'])  # Most recent is first
-                    # Add small random walk (±0.1% typical intraday movement)
-                    volatility = np.random.normal(0, 0.001)
-                    return latest_price * (1 + volatility)
-        except Exception as e:
-            self.logger.error(f"Historical extrapolation failed for {pair}: {e}")
-        
-        return None
-    
     def _update_fx_csvs(self, fx_data: Dict[str, Any]):
         """Update the historical CSV files with new data"""
         try:
@@ -279,9 +254,9 @@ class FXDataCollector:
                 new_row = {
                     'Date': datetime.now().strftime('%m/%d/%Y'),
                     'Price': data['rate'],
-                    'Open': data['rate'] * 0.9995,  # Estimate
-                    'High': data['rate'] * 1.0005,  # Estimate
-                    'Low': data['rate'] * 0.9995,   # Estimate
+                    'Open': data['rate'],
+                    'High': data['rate'],
+                    'Low': data['rate'],
                     'Vol.': '',
                     'Change %': '0.00%'  # Calculate if historical data available
                 }
@@ -548,18 +523,7 @@ class MacroDataCollector:
     async def _get_fred_series(self, series_id: str) -> Optional[Dict[str, Any]]:
         """Get specific FRED series data"""
         try:
-            # For now, use yfinance as a proxy for some macro data
-            # In production, you'd use the actual FRED API
-            
-            if series_id == 'FEDFUNDS':
-                # Fed Funds Rate - can be scraped or use API
-                # For demo, return recent historical value with small variation
-                base_rate = 5.25  # Current approximate rate
-                return {
-                    'date': datetime.now().strftime('%Y-%m-%d'),
-                    'value': base_rate + np.random.normal(0, 0.1)
-                }
-                
+            self.logger.info("FRED_API_KEY not configured; skipping %s", series_id)
         except Exception as e:
             self.logger.warning(f"FRED series {series_id} failed: {e}")
         

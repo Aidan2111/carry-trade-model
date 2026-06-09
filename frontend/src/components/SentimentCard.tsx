@@ -125,8 +125,8 @@ const SentimentCard: React.FC<Props> = ({ data }) => {
       {data.length === 0 && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🧠</div>
-          <div className="text-gray-400 font-medium">Analyzing market sentiment...</div>
-          <div className="text-gray-500 text-sm mt-2">Processing news feeds and social signals</div>
+          <div className="text-gray-400 font-medium">No sentiment data available</div>
+          <div className="text-gray-500 text-sm mt-2">Configure news collection or add sentiment logs</div>
         </div>
       )}
     </div>

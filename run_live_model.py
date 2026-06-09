@@ -1,286 +1,281 @@
 """
-Live Model Runner for Dashboard Integration
-This script runs your ensemble model and generates real predictions
+Deterministic model-output runner for dashboard integration.
+
+This script reads local FX, sentiment, and macro logs. It writes research
+predictions and performance metrics only from available local data, without
+randomized or fabricated fallback values.
 """
 
-import pandas as pd
-import numpy as np
+from __future__ import annotations
+
+import json
 import os
-import sys
-from datetime import datetime, timedelta
-import yfinance as yf
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from newsapi import NewsApiClient
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-# Add the project directory to path
-project_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(project_dir)
+import numpy as np
+import pandas as pd
 
-def run_ensemble_model():
-    """Run your ensemble model and return predictions"""
+
+def run_ensemble_model(base_dir: Optional[str] = None) -> Dict[str, Any]:
+    """Run deterministic log-backed research calculations."""
+    base_dir = base_dir or os.path.dirname(os.path.abspath(__file__))
     try:
-        print("Running ensemble carry trade model...")
-        
-        # Load latest data
-        fx_data = load_latest_fx_data()
-        sentiment_data = load_latest_sentiment_data()
-        macro_data = load_latest_macro_data()
-        
-        # Generate predictions using your model logic
+        fx_data = load_latest_fx_data(base_dir)
+        sentiment_data = load_latest_sentiment_data(base_dir)
+        macro_data = load_latest_macro_data(base_dir)
+
         predictions = generate_predictions(fx_data, sentiment_data, macro_data)
-        
-        # Calculate performance metrics
         performance = calculate_performance_metrics(fx_data)
-        
-        # Update performance log
-        update_performance_log(performance)
-        
+
+        write_prediction_logs(base_dir, predictions)
+        if performance:
+            update_performance_log(base_dir, performance)
+
         return {
-            'status': 'success',
-            'predictions': predictions,
-            'performance': performance,
-            'timestamp': datetime.now().isoformat()
+            "status": "success",
+            "message": "Generated deterministic research outputs from available logs.",
+            "predictions": predictions,
+            "performance": performance,
+            "timestamp": datetime.now().isoformat(),
         }
-        
-    except Exception as e:
-        print(f"Error running ensemble model: {e}")
+    except Exception as exc:
         return {
-            'status': 'error',
-            'error': str(e),
-            'timestamp': datetime.now().isoformat()
+            "status": "error",
+            "error": str(exc),
+            "timestamp": datetime.now().isoformat(),
         }
 
-def load_latest_fx_data():
-    """Load latest FX data from your files"""
-    try:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        
-        # Load USD/UAH data
-        usd_path = os.path.join(base_dir, 'logs', 'fx', 'USD_UAH Historical Data.csv')
-        eur_path = os.path.join(base_dir, 'logs', 'fx', 'EUR_UAH Historical Data.csv')
-        
-        fx_data = {}
-        
-        if os.path.exists(usd_path):
-            df = pd.read_csv(usd_path)
-            df['Date'] = pd.to_datetime(df['Date'])
-            df = df.sort_values('Date')
-            fx_data['USD_UAH'] = df.tail(30)  # Last 30 days
-        
-        if os.path.exists(eur_path):
-            df = pd.read_csv(eur_path)
-            df['Date'] = pd.to_datetime(df['Date'])
-            df = df.sort_values('Date')
-            fx_data['EUR_UAH'] = df.tail(30)  # Last 30 days
-        
-        return fx_data
-        
-    except Exception as e:
-        print(f"Error loading FX data: {e}")
+
+def load_latest_fx_data(base_dir: str) -> Dict[str, pd.DataFrame]:
+    """Load latest FX data from local files."""
+    fx_dir = os.path.join(base_dir, "logs", "fx")
+    paths = {
+        "USD_UAH": os.path.join(fx_dir, "USD_UAH Historical Data.csv"),
+        "EUR_UAH": os.path.join(fx_dir, "EUR_UAH Historical Data.csv"),
+    }
+
+    fx_data: Dict[str, pd.DataFrame] = {}
+    for pair, path in paths.items():
+        if not os.path.exists(path):
+            continue
+        df = pd.read_csv(path)
+        if df.empty or "Price" not in df.columns:
+            continue
+        if "Date" in df.columns:
+            df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+            df = df.sort_values("Date")
+        fx_data[pair] = df.tail(90).copy()
+
+    return fx_data
+
+
+def load_latest_sentiment_data(base_dir: str) -> Dict[str, float]:
+    """Load latest sentiment data from local news logs."""
+    news_path = os.path.join(base_dir, "logs", "news_log.csv")
+    if not os.path.exists(news_path):
         return {}
 
-def load_latest_sentiment_data():
-    """Load latest sentiment data"""
-    try:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        news_path = os.path.join(base_dir, 'logs', 'news_log.csv')
-        
-        if not os.path.exists(news_path):
-            return {}
-        
-        df = pd.read_csv(news_path)
-        
-        # Calculate average sentiment by region for last 7 days
-        sentiment_data = {}
-        for region in ['USD', 'EUR', 'UAH']:
-            region_df = df[df['Region'] == region]
-            if not region_df.empty:
-                recent_sentiment = region_df.tail(50)['Sentiment'].mean()
-                sentiment_data[region] = recent_sentiment
-        
-        return sentiment_data
-        
-    except Exception as e:
-        print(f"Error loading sentiment data: {e}")
+    df = pd.read_csv(news_path)
+    if df.empty or not {"Region", "Sentiment"}.issubset(df.columns):
         return {}
 
-def load_latest_macro_data():
-    """Load latest macro economic data"""
-    try:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        macro_dir = os.path.join(base_dir, 'logs', 'macro')
-        
-        macro_data = {}
-        
-        # Load each macro file
-        macro_files = {
-            'US_FedFunds.csv': 'fed_funds',
-            'US_CPI.csv': 'us_cpi',
-            'US_InflationExpectations.csv': 'us_inflation_exp',
-            'EU_ConsumerPrices.csv': 'eu_cpi'
-        }
-        
-        for filename, key in macro_files.items():
-            file_path = os.path.join(macro_dir, filename)
-            if os.path.exists(file_path):
-                df = pd.read_csv(file_path)
-                if not df.empty:
-                    # Try to find the value column
-                    value_col = None
-                    for col in ['Value', 'Price', 'Close', 'Rate']:
-                        if col in df.columns:
-                            value_col = col
-                            break
-                    
-                    if value_col:
-                        macro_data[key] = float(df.iloc[-1][value_col])
-        
-        return macro_data
-        
-    except Exception as e:
-        print(f"Error loading macro data: {e}")
+    sentiment_data: Dict[str, float] = {}
+    for region in ("USD", "EUR", "UAH"):
+        region_df = df[df["Region"] == region]
+        if not region_df.empty:
+            sentiment_data[region] = float(region_df.tail(50)["Sentiment"].mean())
+
+    return sentiment_data
+
+
+def load_latest_macro_data(base_dir: str) -> Dict[str, float]:
+    """Load latest macro data from local macro logs."""
+    macro_dir = os.path.join(base_dir, "logs", "macro")
+    macro_files = {
+        "US_FedFunds.csv": "fed_funds",
+        "US_CPI.csv": "us_cpi",
+        "US_InflationExpectations.csv": "us_inflation_expectations",
+        "EU_ConsumerPrices.csv": "eu_cpi",
+    }
+
+    macro_data: Dict[str, float] = {}
+    for filename, key in macro_files.items():
+        path = os.path.join(macro_dir, filename)
+        if not os.path.exists(path):
+            continue
+        df = pd.read_csv(path)
+        if df.empty:
+            continue
+        for value_col in ("Value", "Price", "Close", "Rate", key):
+            if value_col in df.columns:
+                macro_data[key] = float(df.iloc[-1][value_col])
+                break
+
+    return macro_data
+
+
+def generate_predictions(
+    fx_data: Dict[str, pd.DataFrame],
+    sentiment_data: Dict[str, float],
+    macro_data: Dict[str, float],
+) -> List[Dict[str, Any]]:
+    """Generate deterministic research predictions from observed inputs."""
+    predictions: List[Dict[str, Any]] = []
+
+    for pair, df in fx_data.items():
+        prices = pd.to_numeric(df["Price"], errors="coerce").dropna().to_numpy()
+        if len(prices) < 6:
+            continue
+
+        returns = np.diff(prices) / prices[:-1]
+        recent_returns = returns[-20:] if len(returns) >= 20 else returns
+        short_momentum = float(np.mean(returns[-5:]))
+        medium_momentum = float(np.mean(recent_returns))
+        volatility = float(np.std(recent_returns))
+
+        base_currency = pair.split("_")[0]
+        quote_currency = pair.split("_")[1]
+        sentiment_spread = (
+            sentiment_data.get(base_currency, 0.0) - sentiment_data.get(quote_currency, 0.0)
+        )
+
+        macro_tilt = 0.0
+        if base_currency == "USD" and "fed_funds" in macro_data:
+            macro_tilt += min(max(macro_data["fed_funds"] / 10000, -0.002), 0.002)
+        if base_currency == "EUR" and "eu_cpi" in macro_data:
+            macro_tilt -= min(max(macro_data["eu_cpi"] / 10000, -0.002), 0.002)
+
+        predicted_return = (
+            0.45 * short_momentum
+            + 0.35 * medium_momentum
+            + 0.15 * sentiment_spread
+            + macro_tilt
+        )
+        predicted_return = float(np.clip(predicted_return * 100, -10.0, 10.0))
+
+        confidence = 0.45
+        confidence += min(len(prices), 90) / 90 * 0.25
+        confidence += max(0.0, 0.20 - min(volatility, 0.20))
+        confidence = float(np.clip(confidence, 0.1, 0.9))
+
+        predictions.append({
+            "pair": pair.replace("_", "/"),
+            "predicted_return": predicted_return,
+            "confidence": confidence,
+            "horizon_days": 30,
+            "features": {
+                "short_momentum": short_momentum,
+                "medium_momentum": medium_momentum,
+                "volatility": volatility,
+                "sentiment_spread": sentiment_spread,
+                "macro_tilt": macro_tilt,
+            },
+            "model": "deterministic_research_heuristic",
+            "timestamp": datetime.now().isoformat(),
+        })
+
+    return predictions
+
+
+def calculate_performance_metrics(fx_data: Dict[str, pd.DataFrame]) -> Dict[str, float]:
+    """Calculate deterministic performance-style metrics from recent FX data."""
+    pair_returns: List[np.ndarray] = []
+    total_returns: List[float] = []
+    volatilities: List[float] = []
+    drawdowns: List[float] = []
+
+    for df in fx_data.values():
+        prices = pd.to_numeric(df["Price"], errors="coerce").dropna().to_numpy()
+        if len(prices) < 2:
+            continue
+        returns = np.diff(prices) / prices[:-1]
+        if len(returns) == 0:
+            continue
+        equity = np.cumprod(1 + returns)
+        peak = np.maximum.accumulate(equity)
+        drawdown = equity / peak - 1
+
+        pair_returns.append(returns)
+        total_returns.append(float((prices[-1] / prices[0] - 1) * 100))
+        volatilities.append(float(np.std(returns) * np.sqrt(252) * 100))
+        drawdowns.append(float(np.min(drawdown) * 100))
+
+    if not pair_returns:
         return {}
 
-def generate_predictions(fx_data, sentiment_data, macro_data):
-    """Generate model predictions based on your ensemble approach"""
-    try:
-        predictions = []
-        
-        # For each currency pair
-        for pair in ['USD_UAH', 'EUR_UAH']:
-            if pair in fx_data and not fx_data[pair].empty:
-                # Get recent price data
-                price_data = fx_data[pair]['Price'].values
-                
-                # Calculate features
-                returns = np.diff(price_data) / price_data[:-1]
-                volatility = np.std(returns[-20:]) if len(returns) >= 20 else np.std(returns)
-                momentum = np.mean(returns[-5:]) if len(returns) >= 5 else 0
-                
-                # Get sentiment for base currency
-                base_currency = pair.split('_')[0]
-                sentiment = sentiment_data.get(base_currency, 0)
-                
-                # Simple ensemble prediction (you can replace with your actual model)
-                # This combines momentum, volatility, and sentiment
-                base_prediction = momentum * 0.4 + sentiment * 0.3
-                volatility_adjustment = min(volatility * 100, 0.1)
-                
-                predicted_return = base_prediction + np.random.normal(0, volatility_adjustment)
-                confidence = min(0.5 + abs(sentiment), 0.9)
-                
-                # Clip extreme values
-                predicted_return = np.clip(predicted_return, -0.1, 0.1)
-                
-                predictions.append({
-                    'pair': pair.replace('_', '/'),
-                    'predicted_return': float(predicted_return * 100),  # Convert to percentage
-                    'confidence': float(confidence),
-                    'horizon_days': 30,
-                    'features': {
-                        'momentum': float(momentum),
-                        'volatility': float(volatility),
-                        'sentiment': float(sentiment)
-                    },
-                    'timestamp': datetime.now().isoformat()
-                })
-        
-        return predictions
-        
-    except Exception as e:
-        print(f"Error generating predictions: {e}")
-        return []
+    combined_returns = np.concatenate(pair_returns)
+    avg_return = float(np.mean(total_returns))
+    avg_volatility = float(np.mean(volatilities))
+    sharpe_ratio = float(avg_return / max(avg_volatility, 0.01))
+    win_rate = float((combined_returns > 0).mean() * 100)
 
-def calculate_performance_metrics(fx_data):
-    """Calculate performance metrics from recent FX data"""
-    try:
-        if not fx_data:
-            return {}
-        
-        # Calculate simple performance metrics
-        total_returns = []
-        volatilities = []
-        
-        for pair, data in fx_data.items():
-            if not data.empty:
-                prices = data['Price'].values
-                returns = np.diff(prices) / prices[:-1]
-                
-                total_return = (prices[-1] / prices[0] - 1) * 100
-                volatility = np.std(returns) * np.sqrt(252) * 100  # Annualized
-                
-                total_returns.append(total_return)
-                volatilities.append(volatility)
-        
-        if total_returns:
-            avg_return = np.mean(total_returns)
-            avg_volatility = np.mean(volatilities)
-            sharpe_ratio = avg_return / max(avg_volatility, 0.01)
-            
-            # Simple drawdown calculation
-            max_drawdown = -abs(avg_return) * 0.8  # Estimate
-            
-            win_rate = 60 + np.random.normal(0, 10)  # Base estimate with noise
-            
-            return {
-                'total_return': float(avg_return),
-                'sharpe_ratio': float(sharpe_ratio),
-                'max_drawdown': float(max_drawdown),
-                'volatility': float(avg_volatility),
-                'win_rate': float(np.clip(win_rate, 0, 100)),
-                'benchmark_return': 8.2
-            }
-        
-        return {}
-        
-    except Exception as e:
-        print(f"Error calculating performance: {e}")
-        return {}
+    return {
+        "total_return": avg_return,
+        "sharpe_ratio": sharpe_ratio,
+        "max_drawdown": float(min(drawdowns)),
+        "volatility": avg_volatility,
+        "win_rate": win_rate,
+    }
 
-def update_performance_log(performance_data):
-    """Update the performance log file"""
-    try:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        perf_path = os.path.join(base_dir, 'logs', 'performance_log.csv')
-        
-        # Create performance entry
-        perf_entry = {
-            'timestamp': datetime.now().isoformat(),
-            'date': datetime.now().strftime('%Y-%m-%d'),
-            **performance_data
-        }
-        
-        # Convert to DataFrame
-        df = pd.DataFrame([perf_entry])
-        
-        # Append to existing file or create new one
-        if os.path.exists(perf_path):
-            df.to_csv(perf_path, mode='a', header=False, index=False)
-        else:
-            df.to_csv(perf_path, index=False)
-        
-        print(f"Updated performance log: {perf_path}")
-        
-    except Exception as e:
-        print(f"Error updating performance log: {e}")
+
+def write_prediction_logs(base_dir: str, predictions: List[Dict[str, Any]]) -> None:
+    """Write prediction outputs for the dashboard when data is available."""
+    if not predictions:
+        return
+
+    logs_dir = os.path.join(base_dir, "logs")
+    os.makedirs(logs_dir, exist_ok=True)
+
+    json_path = os.path.join(logs_dir, "model_predictions.json")
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(predictions, f, indent=2)
+
+    forecast_rows = [{
+        "timestamp": pred["timestamp"],
+        "pair": pred["pair"],
+        "predicted_return": pred["predicted_return"],
+        "confidence": pred["confidence"],
+        "horizon_days": pred["horizon_days"],
+        "model": pred["model"],
+    } for pred in predictions]
+    pd.DataFrame(forecast_rows).to_csv(os.path.join(logs_dir, "forecast_log.csv"), index=False)
+
+
+def update_performance_log(base_dir: str, performance_data: Dict[str, float]) -> None:
+    """Append deterministic performance metrics to the local performance log."""
+    logs_dir = os.path.join(base_dir, "logs")
+    os.makedirs(logs_dir, exist_ok=True)
+    perf_path = os.path.join(logs_dir, "performance_log.csv")
+
+    perf_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        **performance_data,
+    }
+    df = pd.DataFrame([perf_entry])
+    if os.path.exists(perf_path):
+        df.to_csv(perf_path, mode="a", header=False, index=False)
+    else:
+        df.to_csv(perf_path, index=False)
+
 
 if __name__ == "__main__":
-    print("Running Live Ensemble Model for Dashboard...")
-    print("=" * 50)
-    
+    print("Running deterministic carry trade research model for dashboard...")
+    print("=" * 60)
     result = run_ensemble_model()
-    
-    if result['status'] == 'success':
-        print("Model run successful!")
-        print(f"Generated {len(result['predictions'])} predictions")
-        print("Performance metrics updated")
-        
-        # Print predictions
-        for pred in result['predictions']:
-            print(f"   {pred['pair']}: {pred['predicted_return']:.2f}% (confidence: {pred['confidence']:.2f})")
-            
+
+    if result["status"] == "success":
+        predictions = result.get("predictions", [])
+        print("Model run completed.")
+        print(f"Generated {len(predictions)} prediction rows from available logs.")
+        for pred in predictions:
+            print(
+                f"   {pred['pair']}: {pred['predicted_return']:.2f}% "
+                f"(confidence: {pred['confidence']:.2f})"
+            )
     else:
-        print("Model run failed!")
-        print(f"Error: {result['error']}")
-    
-    print("=" * 50)
+        print("Model run failed.")
+        print(f"Error: {result.get('error')}")
+
+    print("=" * 60)

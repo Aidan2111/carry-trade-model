@@ -131,8 +131,8 @@ const ModelPredictionsCard: React.FC<Props> = ({ data }) => {
       {data.length === 0 && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🤖</div>
-          <div className="text-gray-400 font-medium">Training AI models...</div>
-          <div className="text-gray-500 text-sm mt-2">Generating predictions from market data</div>
+          <div className="text-gray-400 font-medium">No model outputs available</div>
+          <div className="text-gray-500 text-sm mt-2">Add forecast logs or run the research model locally</div>
         </div>
       )}
     </div>

@@ -89,7 +89,7 @@ data_test["benchmark_eur"] = (1 + data_test["eur_return"]).cumprod() * capital
 
 # === Export Results to CSV ===
 export_cols = ["date", "USD_UAH", "EUR_UAH", "strategy_usd", "benchmark_usd", "strategy_eur", "benchmark_eur"]
-data_test[export_cols].to_csv(r"carry-trade-model\logs\performance_log.csv", index=False)
+data_test[export_cols].to_csv(os.path.join("logs", "performance_log.csv"), index=False)
 
 # === Plotting ===
 plt.figure(figsize=(12, 6))
@@ -123,11 +123,10 @@ forecast_df = pd.DataFrame(outlook_results, columns=[
     "Days", "USD_Return", "USD_FX_Rate", "USD_Carry", 
     "EUR_Return", "EUR_FX_Rate", "EUR_Carry"
 ])
-forecast_df.to_csv(r"carry-trade-model\logs\forecast_log.csv", index=False)
+forecast_df.to_csv(os.path.join("logs", "forecast_log.csv"), index=False)
 
 # === Trade Logic ===
 recommendation = forecast_df.copy()
 recommendation["USD_Trade"] = recommendation["USD_Carry"].apply(lambda x: "LONG USD/UAH" if x > 0.001 else "HOLD/EXIT")
 recommendation["EUR_Trade"] = recommendation["EUR_Carry"].apply(lambda x: "SHORT EUR/UAH" if x < -0.001 else "HOLD/EXIT")
 print(recommendation)
-

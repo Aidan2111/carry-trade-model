@@ -4,7 +4,6 @@ Connects existing carry trade models to the dashboard API
 """
 
 import pandas as pd
-import numpy as np
 import json
 import os
 from datetime import datetime, timedelta
@@ -19,46 +18,26 @@ class DashboardIntegrator:
         
     def run_model_and_update_logs(self) -> Dict[str, Any]:
         """
-        Run the carry trade model and update log files for dashboard
-        This calls your actual carry_model_live_logged.py
+        Run the deterministic log-backed model runner and update dashboard logs.
         """
         try:
-            import subprocess
-            import sys
-            
-            # Run your carry model
-            print("Running carry_model_live_logged.py...")
-            result = subprocess.run([
-                sys.executable, 
-                os.path.join(self.base_dir, 'carry_model_live_logged.py')
-            ], capture_output=True, text=True, cwd=self.base_dir)
-            
-            if result.returncode == 0:
-                print("Carry model executed successfully")
-                
-                # Load results from the updated log files
-                fx_data = self.get_latest_fx_data()
-                sentiment_data = self.get_latest_sentiment_data()
-                performance_data = self.calculate_performance_metrics()
-                
-                return {
-                    'status': 'success',
-                    'timestamp': datetime.now().isoformat(),
-                    'results': {
-                        'fx_rates': fx_data,
-                        'sentiment': sentiment_data,
-                        'performance': performance_data
-                    },
-                    'model_output': result.stdout
-                }
-            else:
-                return {
-                    'status': 'error',
-                    'timestamp': datetime.now().isoformat(),
-                    'error': result.stderr,
-                    'model_output': result.stdout
-                }
-                
+            from run_live_model import run_ensemble_model
+
+            result = run_ensemble_model(base_dir=self.base_dir)
+            return {
+                'status': result.get('status', 'error'),
+                'timestamp': datetime.now().isoformat(),
+                'results': {
+                    'fx_rates': self.get_latest_fx_data(),
+                    'sentiment': self.get_latest_sentiment_data(),
+                    'performance': self.calculate_performance_metrics(),
+                    'predictions': self.get_latest_predictions(),
+                    'signals': self.get_trading_signals(),
+                },
+                'model_output': result.get('message', ''),
+                'error': result.get('error')
+            }
+
         except Exception as e:
             return {
                 'status': 'error',
@@ -67,7 +46,7 @@ class DashboardIntegrator:
             }
     
     def get_latest_fx_data(self) -> Dict[str, Any]:
-        """Get latest FX data from your log files"""
+        """Get latest FX data from local log files."""
         try:
             # Check historical data files
             usd_path = os.path.join(self.logs_dir, 'fx', 'USD_UAH Historical Data.csv')
@@ -128,28 +107,26 @@ class DashboardIntegrator:
             return {}
     
     def calculate_performance_metrics(self) -> Dict[str, Any]:
-        """Calculate performance metrics from FX data"""
+        """Load performance metrics from the performance log when available."""
         try:
-            fx_data = self.get_latest_fx_data()
-            
-            # Simple performance calculation
-            if fx_data:
-                # This is a simplified calculation - you can enhance based on your needs
-                performance = {
-                    'total_return': np.random.normal(12.5, 5.0),  # Replace with actual calculation
-                    'sharpe_ratio': np.random.normal(1.35, 0.3),
-                    'max_drawdown': np.random.normal(-8.2, 2.0),
-                    'win_rate': np.random.normal(65, 10),
-                    'avg_daily_return': np.random.normal(0.08, 0.02),
-                    'volatility': np.random.normal(12.5, 3.0),
-                    'benchmark': 8.2
-                }
-                return performance
-            
+            perf_log_path = os.path.join(self.logs_dir, 'performance_log.csv')
+            if os.path.exists(perf_log_path):
+                df = pd.read_csv(perf_log_path)
+                if not df.empty:
+                    latest = df.iloc[-1]
+                    return {
+                        'total_return': float(latest.get('total_return', 0)),
+                        'sharpe_ratio': float(latest.get('sharpe_ratio', 0)),
+                        'max_drawdown': float(latest.get('max_drawdown', 0)),
+                        'win_rate': float(latest.get('win_rate', 0)),
+                        'avg_daily_return': float(latest.get('avg_daily_return', 0)),
+                        'volatility': float(latest.get('volatility', 0)),
+                        'benchmark': float(latest.get('benchmark', 0))
+                    }
             return {}
-            
+
         except Exception as e:
-            print(f"Error calculating performance: {e}")
+            print(f"Error loading performance metrics: {e}")
             return {}
     
     def update_fx_logs(self, fx_data: Dict[str, Any]):
@@ -237,30 +214,38 @@ class DashboardIntegrator:
             print(f"Error updating news logs: {e}")
     
     def get_latest_predictions(self) -> List[Dict[str, Any]]:
-        """Get latest model predictions"""
+        """Get latest model predictions from model output files when available."""
         try:
-            # This would call your actual model prediction function
-            # For now, return mock predictions
-            predictions = [
-                {
-                    'pair': 'USD/UAH',
-                    'predicted_return': np.random.normal(2.0, 1.0),
-                    'confidence': np.random.uniform(0.6, 0.9),
-                    'horizon': 30,
-                    'model': 'ensemble',
-                    'timestamp': datetime.now().isoformat()
-                },
-                {
-                    'pair': 'EUR/UAH',
-                    'predicted_return': np.random.normal(-0.5, 1.5),
-                    'confidence': np.random.uniform(0.5, 0.8),
-                    'horizon': 30,
-                    'model': 'ensemble',
-                    'timestamp': datetime.now().isoformat()
-                }
-            ]
-            return predictions
-            
+            json_path = os.path.join(self.logs_dir, 'model_predictions.json')
+            if os.path.exists(json_path):
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    predictions = json.load(f)
+                return predictions if isinstance(predictions, list) else []
+
+            forecast_path = os.path.join(self.logs_dir, 'forecast_log.csv')
+            if os.path.exists(forecast_path):
+                df = pd.read_csv(forecast_path)
+                if df.empty:
+                    return []
+
+                predictions = []
+                for _, row in df.tail(20).iterrows():
+                    pair = row.get('pair') or row.get('Pair')
+                    predicted_return = row.get('predicted_return', row.get('predictedReturn'))
+                    if pair is None or predicted_return is None:
+                        continue
+                    predictions.append({
+                        'pair': str(pair),
+                        'predicted_return': float(predicted_return),
+                        'confidence': float(row.get('confidence', 0)),
+                        'horizon': int(row.get('horizon', row.get('horizon_days', 30))),
+                        'model': str(row.get('model', 'research_model')),
+                        'timestamp': str(row.get('timestamp', datetime.now().isoformat()))
+                    })
+                return predictions
+
+            return []
+
         except Exception as e:
             print(f"Error getting predictions: {e}")
             return []
@@ -268,12 +253,11 @@ class DashboardIntegrator:
     def get_trading_signals(self) -> List[Dict[str, Any]]:
         """Get current trading signals"""
         try:
-            # This would call your actual trading signal generation
             signals = []
             predictions = self.get_latest_predictions()
             
             for pred in predictions:
-                # Simple signal logic - improve based on your actual strategy
+                # Simple signal logic; replace with a project-specific strategy if needed.
                 predicted_return = pred['predicted_return']
                 confidence = pred['confidence']
                 
@@ -326,7 +310,7 @@ class DashboardIntegrator:
 
 def scheduled_model_run():
     """
-    Function to be called by your scheduled tasks (cron, task scheduler, etc.)
+    Function to be called by local scheduled tasks (cron, task scheduler, etc.).
     This updates all the data that the dashboard displays
     """
     integrator = DashboardIntegrator()

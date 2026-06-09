@@ -1,20 +1,35 @@
 """
 Real Data Integration for Carry Trade Dashboard
-This file connects your existing models and data to the dashboard
+This file connects local models and data to the dashboard.
 """
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_cors import CORS
 import pandas as pd
-import json
 import os
-from datetime import datetime, timedelta
-import numpy as np
+from datetime import datetime
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import yfinance as yf
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+
+
+def get_cors_origins():
+    """Return explicit dashboard origins; use CORS_ORIGINS=* only if intentional."""
+    raw_origins = os.getenv(
+        'CORS_ORIGINS',
+        'http://localhost:3000,http://127.0.0.1:3000,'
+        'http://localhost:5173,http://127.0.0.1:5173'
+    )
+    if raw_origins.strip() == '*':
+        return '*'
+    return [origin.strip() for origin in raw_origins.split(',') if origin.strip()]
+
+
+CORS(app, resources={
+    r"/api/*": {"origins": get_cors_origins()},
+    r"/health": {"origins": get_cors_origins()},
+})
 
 # Configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -28,14 +43,14 @@ print(f"Base directory: {BASE_DIR}")
 print(f"Logs directory: {LOGS_DIR}")
 
 class RealDataProvider:
-    """Provides real data from your existing log files and models"""
+    """Provides real data from local log files and models."""
     
     def __init__(self):
         self.base_dir = BASE_DIR
         self.logs_dir = LOGS_DIR
     
     def get_latest_fx_rates(self):
-        """Get real FX rates from your historical data and live sources"""
+        """Get real FX rates from local historical data and live sources."""
         try:
             fx_rates = []
             
@@ -115,7 +130,7 @@ class RealDataProvider:
             return []
     
     def get_sentiment_data(self):
-        """Get real sentiment data from your news logs"""
+        """Get real sentiment data from local news logs."""
         try:
             news_path = os.path.join(self.logs_dir, 'news_log.csv')
             if not os.path.exists(news_path):
@@ -155,7 +170,7 @@ class RealDataProvider:
             return []
     
     def get_macro_data(self):
-        """Get real macro data from your logs"""
+        """Get real macro data from local logs."""
         try:
             macro_data = []
             macro_dir = os.path.join(self.logs_dir, 'macro')
@@ -203,7 +218,7 @@ class RealDataProvider:
             return []
     
     def get_performance_metrics(self):
-        """Get real performance metrics from your logs"""
+        """Get real performance metrics from local logs."""
         try:
             perf_path = os.path.join(self.logs_dir, 'performance_log.csv')
             
@@ -229,7 +244,7 @@ class RealDataProvider:
             return None
     
     def get_model_predictions(self):
-        """Generate model predictions using your existing models"""
+        """Generate model predictions using local model outputs."""
         try:
             # Deterministic research heuristic based on recent momentum and sentiment.
             # Trained-model outputs should be added through a separate prediction file.
@@ -307,7 +322,7 @@ class RealDataProvider:
             return []
     
     def get_news_headlines(self):
-        """Get recent news headlines from your logs"""
+        """Get recent news headlines from local logs."""
         try:
             news_path = os.path.join(self.logs_dir, 'news_log.csv')
             if not os.path.exists(news_path):
@@ -387,7 +402,7 @@ def get_news():
 
 @app.route('/api/dashboard')
 def get_dashboard_data():
-    """Get complete dashboard data - all real data from your systems"""
+    """Get complete dashboard data from configured real sources."""
     try:
         dashboard_data = {
             'fxRates': data_provider.get_latest_fx_rates(),
@@ -406,9 +421,20 @@ def get_dashboard_data():
 
 @app.route('/api/update-model', methods=['POST'])
 def update_model():
-    """Trigger model update - runs your carry trade model"""
+    """Trigger a local model update when explicitly enabled."""
+    enabled = os.getenv('ENABLE_MODEL_UPDATE_ENDPOINT', '').lower() in {'1', 'true', 'yes'}
+    if not enabled:
+        return jsonify({
+            'status': 'disabled',
+            'message': (
+                'Model updates are disabled by default. Set '
+                'ENABLE_MODEL_UPDATE_ENDPOINT=true for local research use.'
+            ),
+            'timestamp': datetime.now().isoformat()
+        }), 403
+
     try:
-        # Import and run your model
+        # Import and run the local model workflow.
         from dashboard_integration import scheduled_model_run
         result = scheduled_model_run()
         return jsonify(result)
@@ -419,14 +445,24 @@ def update_model():
             'timestamp': datetime.now().isoformat()
         }), 500
 
-if __name__ == '__main__':
+
+def run_dev_server():
+    """Run the local development API server with safe public-release defaults."""
+    host = os.getenv('FLASK_HOST', '127.0.0.1')
+    port = int(os.getenv('FLASK_PORT', '8000'))
+    debug_enabled = os.getenv('FLASK_DEBUG', '').lower() in {'1', 'true', 'yes'}
+
     print("\n" + "="*50)
     print("🚀 CARRY TRADE API SERVER - REAL DATA MODE")
     print("="*50)
-    print(f"📊 Data Source: Your log files in {LOGS_DIR}")
+    print(f"📊 Data Source: local log files in {LOGS_DIR}")
     print(f"📈 FX Data: {os.path.join(LOGS_DIR, 'fx')}")
     print(f"📰 News Data: {os.path.join(LOGS_DIR, 'news_log.csv')}")
     print(f"📊 Macro Data: {os.path.join(LOGS_DIR, 'macro')}")
+    print(f"🌐 Host: {host}:{port}")
     print("="*50)
-    debug_enabled = os.getenv('FLASK_DEBUG', '').lower() in {'1', 'true', 'yes'}
-    app.run(host='0.0.0.0', port=8000, debug=debug_enabled)
+    app.run(host=host, port=port, debug=debug_enabled)
+
+
+if __name__ == '__main__':
+    run_dev_server()

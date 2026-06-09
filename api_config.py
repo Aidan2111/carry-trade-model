@@ -16,6 +16,7 @@ class APIConfig:
         optional_keys = [
             'NEWS_API_KEY',
             'ALPHA_VANTAGE_API_KEY',
+            'CURRENCY_API_KEY',
             'FRED_API_KEY',
             'FIXER_API_KEY'
         ]
@@ -27,7 +28,7 @@ class APIConfig:
         
         if missing_keys:
             print(f"Optional API keys not configured: {missing_keys}")
-            print("Add them to your .env file to enable those data sources.")
+            print("Add them to a local .env file to enable those data sources.")
             return False
 
         print("All optional API keys configured successfully")
@@ -38,6 +39,9 @@ class APIConfig:
     
     def get_alpha_vantage_key(self):
         return os.getenv('ALPHA_VANTAGE_API_KEY')
+
+    def get_currency_api_key(self):
+        return os.getenv('CURRENCY_API_KEY')
     
     def get_fred_key(self):
         return os.getenv('FRED_API_KEY')

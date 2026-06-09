@@ -29,6 +29,30 @@ Data provenance is explicit in the public-facing flow. The repository separates 
 - Predictions and signals: research heuristics unless you add trained model outputs to the expected log files.
 - Performance metrics: shown only when a `logs/performance_log.csv` file exists. The API no longer invents portfolio performance numbers when no performance data is available.
 
+### Data Source Tiers
+
+Free/no-key data is enough to run the project for fun, demos, and local research:
+
+- Yahoo Finance via `yfinance` for FX rates where available.
+- ExchangeRate-API public endpoint for basic FX fallback data.
+- RSS feeds for broad financial headlines.
+- Local CSV logs that you create by running the collectors.
+
+Optional free API keys improve coverage without requiring paid plans:
+
+- `NEWS_API_KEY` enables richer headline collection from NewsAPI.
+- `FRED_API_KEY` enables official macro series from FRED.
+- `ALPHA_VANTAGE_API_KEY` enables another FX source.
+- `CURRENCY_API_KEY` enables CurrencyAPI as an additional FX source.
+
+Paid or premium data is not required, but it is better for serious research:
+
+- `FIXER_API_KEY` or other paid FX providers can improve reliability, quotas, and coverage.
+- Professional macro/news/market-data feeds usually have cleaner licensing, better uptime, and better historical depth.
+- Higher-quality data usually comes from paid providers; free sources are good enough to explore the system but should not be treated as institutional-grade inputs.
+
+If a source is unavailable or a key is missing, the public API returns empty or `null` data for that slice instead of making up values.
+
 Not financial advice. This software is for research, education, and portfolio demonstration only.
 
 ## Current Public-Ready Entry Points
@@ -68,7 +92,7 @@ Optional API keys:
 
 ```bash
 cp .env.example .env
-# Fill in NEWS_API_KEY, FRED_API_KEY, ALPHA_VANTAGE_API_KEY, or FIXER_API_KEY if you use those sources.
+# Fill in optional keys only for the providers you want to use.
 ```
 
 ### Run The API
@@ -78,7 +102,7 @@ source .venv/bin/activate
 python api_server_real_data.py
 ```
 
-The API runs at `http://localhost:8000`.
+The API runs at `http://127.0.0.1:8000` by default. Use `FLASK_HOST`, `FLASK_PORT`, and `CORS_ORIGINS` if you intentionally expose it elsewhere.
 
 Useful endpoints:
 
