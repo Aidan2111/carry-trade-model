@@ -18,6 +18,7 @@ warnings.filterwarnings('ignore')
 
 # Advanced ML libraries
 import optuna
+from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import TimeSeriesSplit, RandomizedSearchCV
 from sklearn.ensemble import StackingRegressor, VotingRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
@@ -44,52 +45,53 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 import joblib
 
-class AttentionLayer(nn.Module):
-    """Attention mechanism for time series"""
-    def __init__(self, hidden_dim):
-        super(AttentionLayer, self).__init__()
-        self.hidden_dim = hidden_dim
-        self.attention = nn.Linear(hidden_dim, 1)
+if PYTORCH_AVAILABLE:
+    class AttentionLayer(nn.Module):
+        """Attention mechanism for time series"""
+        def __init__(self, hidden_dim):
+            super(AttentionLayer, self).__init__()
+            self.hidden_dim = hidden_dim
+            self.attention = nn.Linear(hidden_dim, 1)
         
-    def forward(self, x):
-        # x shape: (batch_size, seq_len, hidden_dim)
-        attention_weights = torch.softmax(self.attention(x), dim=1)
-        context = torch.sum(attention_weights * x, dim=1)
-        return context, attention_weights
+        def forward(self, x):
+            # x shape: (batch_size, seq_len, hidden_dim)
+            attention_weights = torch.softmax(self.attention(x), dim=1)
+            context = torch.sum(attention_weights * x, dim=1)
+            return context, attention_weights
 
-class TransformerModel(nn.Module):
-    """Transformer-based model for carry trade prediction"""
-    def __init__(self, input_dim, hidden_dim=128, num_heads=8, num_layers=4):
-        super(TransformerModel, self).__init__()
-        self.input_proj = nn.Linear(input_dim, hidden_dim)
+    class TransformerModel(nn.Module):
+        """Transformer-based model for carry trade prediction"""
+        def __init__(self, input_dim, hidden_dim=128, num_heads=8, num_layers=4):
+            super(TransformerModel, self).__init__()
+            self.input_proj = nn.Linear(input_dim, hidden_dim)
         
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=hidden_dim,
-            nhead=num_heads,
-            dim_feedforward=hidden_dim * 4,
-            dropout=0.1
-        )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
-        self.attention = AttentionLayer(hidden_dim)
-        self.output = nn.Linear(hidden_dim, 1)
+            encoder_layer = nn.TransformerEncoderLayer(
+                d_model=hidden_dim,
+                nhead=num_heads,
+                dim_feedforward=hidden_dim * 4,
+                dropout=0.1
+            )
+            self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
+            self.attention = AttentionLayer(hidden_dim)
+            self.output = nn.Linear(hidden_dim, 1)
         
-    def forward(self, x):
-        # Project input to hidden dimension
-        x = self.input_proj(x)
+        def forward(self, x):
+            # Project input to hidden dimension
+            x = self.input_proj(x)
         
-        # Transformer expects (seq_len, batch_size, hidden_dim)
-        x = x.transpose(0, 1)
-        transformer_out = self.transformer(x)
+            # Transformer expects (seq_len, batch_size, hidden_dim)
+            x = x.transpose(0, 1)
+            transformer_out = self.transformer(x)
         
-        # Back to (batch_size, seq_len, hidden_dim)
-        transformer_out = transformer_out.transpose(0, 1)
+            # Back to (batch_size, seq_len, hidden_dim)
+            transformer_out = transformer_out.transpose(0, 1)
         
-        # Apply attention
-        context, attention_weights = self.attention(transformer_out)
+            # Apply attention
+            context, attention_weights = self.attention(transformer_out)
         
-        # Final prediction
-        output = self.output(context)
-        return output
+            # Final prediction
+            output = self.output(context)
+            return output
 
 class Phase3AdvancedModel:
     """Advanced carry trade model with Phase 3 enhancements"""
@@ -202,7 +204,7 @@ class Phase3AdvancedModel:
         
         # Create feature matrix
         feature_df = pd.DataFrame(features)
-        feature_df = feature_df.fillna(method='ffill').fillna(0)
+        feature_df = feature_df.ffill().fillna(0)
         
         # Add original features
         for col in data.columns:
@@ -313,7 +315,7 @@ class Phase3AdvancedModel:
         # Create stacking ensemble
         stacking_model = StackingRegressor(
             estimators=base_models,
-            final_estimator=Ridge(alpha=1.0),
+            final_estimator=RidgeCV(alphas=np.logspace(-8, 2, 30)),
             cv=3
         )
         

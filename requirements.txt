@@ -1,3 +1,5 @@
+# Core dependencies for the canonical path:
+# api_server_real_data.py, improved_ensemble_model.py, data collectors, tests.
 pandas
 numpy
 matplotlib
@@ -5,12 +7,9 @@ scikit-learn
 scipy
 vaderSentiment
 newsapi-python
-transformers
-torch
 yfinance
 lightgbm
 xgboost
-SHAP
 flask
 flask-cors
 python-dotenv
@@ -19,3 +18,9 @@ feedparser
 aiohttp
 schedule
 fredapi
+
+# Optional extras for the exploratory phase3_advanced_model.py only.
+# Uncomment if you want to run that script; torch enables its transformer path.
+# optuna
+# catboost
+# torch

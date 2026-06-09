@@ -20,7 +20,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.ensemble import StackingRegressor, RandomForestRegressor
 from sklearn.preprocessing import RobustScaler
 from sklearn.feature_selection import SelectKBest, f_regression
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, RidgeCV
 from sklearn.metrics import mean_squared_error, r2_score
 import lightgbm as lgb
 import xgboost as xgb
@@ -96,7 +96,7 @@ class Phase2EnhancedModel:
             data = data.merge(sentiment_pivot, on='date', how='left')
             
             # Fill any remaining NaN values
-            data = data.fillna(method='ffill').fillna(method='bfill')
+            data = data.ffill().bfill()
             
             # Data quality validation
             if len(data) < 100:
@@ -286,7 +286,7 @@ class Phase2EnhancedModel:
         
         # Create feature matrix
         feature_matrix = pd.DataFrame(features)
-        feature_matrix = feature_matrix.fillna(method='ffill').fillna(0)
+        feature_matrix = feature_matrix.ffill().fillna(0)
         
         print(f"✅ Advanced features created: {len(feature_names)} features")
         return feature_matrix, feature_names
@@ -435,7 +435,7 @@ class Phase2EnhancedModel:
         # Create stacking ensemble with simple CV split
         stacking_model = StackingRegressor(
             estimators=base_models,
-            final_estimator=Ridge(alpha=1.0),
+            final_estimator=RidgeCV(alphas=np.logspace(-8, 2, 30)),
             cv=3  # Use simple integer instead of TimeSeriesSplit for training
         )
         
