@@ -120,7 +120,7 @@ npm install
 npm start
 ```
 
-The dashboard runs at `http://localhost:3000` and requests the backend at `http://localhost:8000` by default.
+The dashboard runs at `http://127.0.0.1:5173` and requests the backend at `http://localhost:8000` by default.
 
 To use another backend URL:
 

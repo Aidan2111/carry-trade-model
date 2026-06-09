@@ -1,4 +1,5 @@
 import hashlib
+import json
 import pathlib
 import re
 import unittest
@@ -85,6 +86,16 @@ class PublicReadinessTests(unittest.TestCase):
         self.assertIn("Optional free API keys", readme)
         self.assertIn("Paid or premium data", readme)
         self.assertIn("Higher-quality data usually comes from paid providers", readme)
+
+    def test_frontend_dev_server_docs_match_vite_script(self):
+        package = json.loads((REPO_ROOT / "frontend/package.json").read_text(encoding="utf-8"))
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        dashboard_readme = (REPO_ROOT / "README_DASHBOARD.md").read_text(encoding="utf-8")
+
+        self.assertIn("--host 127.0.0.1", package["scripts"]["start"])
+        self.assertIn("--port 5173", package["scripts"]["start"])
+        self.assertIn("http://127.0.0.1:5173", readme)
+        self.assertIn("http://127.0.0.1:5173", dashboard_readme)
 
     def test_canonical_api_uses_local_safe_defaults(self):
         api = (REPO_ROOT / "api_server_real_data.py").read_text(encoding="utf-8")

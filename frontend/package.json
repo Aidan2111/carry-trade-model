@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "React dashboard for the carry trade research model",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "start": "vite --host 127.0.0.1",
+    "dev": "vite --host 127.0.0.1 --port 5173",
+    "start": "vite --host 127.0.0.1 --port 5173",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1 --port 4173"
   },
   "dependencies": {
     "axios": "^1.6.0",

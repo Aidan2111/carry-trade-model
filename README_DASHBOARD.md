@@ -230,6 +230,6 @@ For issues or questions:
 
 ---
 
-**Dashboard URL**: http://localhost:3000  
+**Dashboard URL**: http://127.0.0.1:5173
 **API URL**: http://127.0.0.1:8000
 **Health Check**: http://127.0.0.1:8000/health
