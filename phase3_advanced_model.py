@@ -20,7 +20,7 @@ warnings.filterwarnings('ignore')
 import optuna
 from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import TimeSeriesSplit, RandomizedSearchCV
-from sklearn.ensemble import StackingRegressor, VotingRegressor
+from sklearn.ensemble import RandomForestRegressor, StackingRegressor, VotingRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import lightgbm as lgb
 import xgboost as xgb

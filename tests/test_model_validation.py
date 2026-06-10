@@ -89,6 +89,24 @@ class LeakageAndSignalRecoveryTests(unittest.TestCase):
         results = model.time_series_split_validation(X, y_usd, y_eur, dates)
         return float(np.mean(results["usd_scores"]))
 
+    def test_cv_folds_keep_purge_gap_between_train_and_validation(self):
+        model = FastCarryTradeModel()
+        data = model._enhanced_feature_engineering(make_market_frame(seed=11))
+        X, y_usd, y_eur, dates, _ = model.prepare_features_and_targets(data)
+        results = model.time_series_split_validation(X, y_usd, y_eur, dates)
+
+        self.assertTrue(results["fold_dates"], "CV produced no folds")
+        for fold in results["fold_dates"]:
+            separation = (fold["val_start"] - fold["train_end"]).days
+            # The 7-day forward target needs prices through train_end + 7, so
+            # validation must start more than 7 days after training ends.
+            self.assertGreater(
+                separation,
+                7,
+                f"Fold {fold['fold']} validation starts {separation} day(s) "
+                "after training ends; the 7-day purge gap is missing",
+            )
+
     def test_cross_validation_reports_no_skill_on_pure_noise(self):
         model = FastCarryTradeModel()
         data = model._enhanced_feature_engineering(make_market_frame(seed=11))
