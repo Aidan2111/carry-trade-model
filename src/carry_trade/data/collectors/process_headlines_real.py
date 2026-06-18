@@ -2,13 +2,18 @@ import pandas as pd
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import os
 
-os.makedirs("logs", exist_ok=True)
+from carry_trade.paths import PROJECT_ROOT
+
+
+logs_dir = PROJECT_ROOT / "logs"
+os.makedirs(logs_dir, exist_ok=True)
 analyzer = SentimentIntensityAnalyzer()
 
 def load_and_tag(filepath, source_name):
     df = pd.read_csv(filepath)
+    filepath_text = str(filepath)
 
-    if "cnbc" in filepath.lower():
+    if "cnbc" in filepath_text.lower():
         df["date"] = pd.to_datetime(df["Time"].str.replace("ET", "").str.strip(), errors="coerce").dt.date
         df["title"] = df["Headlines"]
     else:
@@ -30,9 +35,9 @@ def load_and_tag(filepath, source_name):
     df["source"] = source_name
     return df
 
-cnbc = load_and_tag("cnbc_headlines.csv", "CNBC")
-guardian = load_and_tag("guardian_headlines.csv", "Guardian")
-reuters = load_and_tag("reuters_headlines.csv", "Reuters")
+cnbc = load_and_tag(PROJECT_ROOT / "cnbc_headlines.csv", "CNBC")
+guardian = load_and_tag(PROJECT_ROOT / "guardian_headlines.csv", "Guardian")
+reuters = load_and_tag(PROJECT_ROOT / "reuters_headlines.csv", "Reuters")
 
 df = pd.concat([cnbc, guardian, reuters], ignore_index=True)
 df = df.dropna(subset=["title"])
@@ -53,6 +58,6 @@ df = df.dropna(subset=["Region"])
 df["Sentiment"] = df["title"].apply(lambda t: analyzer.polarity_scores(t)["compound"])
 
 df = df.rename(columns={"date": "Date", "title": "Headline"})
-df[["Date", "Region", "Headline", "Sentiment"]].to_csv("logs/news_log.csv", index=False)
+df[["Date", "Region", "Headline", "Sentiment"]].to_csv(logs_dir / "news_log.csv", index=False)
 
 print("✅ Cleaned historical news data saved to logs/news_log.csv.")

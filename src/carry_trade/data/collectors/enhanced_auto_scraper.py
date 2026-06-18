@@ -31,7 +31,8 @@ import json
 from datetime import datetime, timedelta
 import threading
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from news_client import get_newsapi_client
+from carry_trade.data.sources.news_client import get_newsapi_client
+from carry_trade.paths import PROJECT_ROOT
 import logging
 from typing import Dict, List, Optional
 import schedule
@@ -39,7 +40,7 @@ import schedule
 class EnhancedDataScraper:
     def __init__(self):
         # Setup paths using the repo root by default.
-        self.base_dir = os.getenv("CARRY_TRADE_MODEL_DIR", os.path.dirname(os.path.abspath(__file__)))
+        self.base_dir = os.getenv("CARRY_TRADE_MODEL_DIR", str(PROJECT_ROOT))
         self.log_dir = os.path.join(self.base_dir, "logs")
         self.fx_dir = os.path.join(self.log_dir, "fx")
         self.macro_dir = os.path.join(self.log_dir, "macro")

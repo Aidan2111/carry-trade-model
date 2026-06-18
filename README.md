@@ -59,14 +59,32 @@ Not financial advice. This software is for research, education, and portfolio de
 
 Use these files first:
 
-- `api_server_real_data.py` - Flask API for the dashboard.
+- `api_server_real_data.py` - root compatibility wrapper for the Flask API in `src/carry_trade/api/server.py`.
 - `frontend/` - React TypeScript dashboard.
-- `enhanced_scraper_simple.py` - practical data collection script with optional NewsAPI usage.
-- `improved_ensemble_model.py` - improved model experiment with time-series validation and optional XGBoost/LightGBM support.
+- `enhanced_scraper_simple.py` - root compatibility wrapper for the practical data collector in `src/carry_trade/data/collectors/`.
+- `improved_ensemble_model.py` - root compatibility import for the model code in `src/carry_trade/modeling/experiments/`.
 - `tests/test_public_readiness.py` - release hygiene checks for secrets, dashboard data wiring, env docs, and README positioning.
 - `tests/test_model_validation.py` - model-theory checks: forward-looking target construction, no-skill-on-noise leakage detection, and planted-signal recovery.
 
-Several older scripts remain in the repo to show project history. Treat them as exploratory unless the README calls them out above.
+Several older scripts remain in `archive/legacy/` and `docs/reports/` to show project history. Treat them as exploratory unless the README calls them out above.
+
+## Repository Layout
+
+The project uses a `src/carry_trade/` package so current implementation code is grouped by responsibility:
+
+- `src/carry_trade/api/` - Flask API implementation.
+- `src/carry_trade/data/collectors/` - local data collectors and historical import scripts.
+- `src/carry_trade/data/sources/` - shared low-level source clients such as NewsAPI.
+- `src/carry_trade/data/providers/` - optional premium provider clients.
+- `src/carry_trade/data/runtime/` - runtime data-engine components.
+- `src/carry_trade/modeling/experiments/` - research model experiments.
+- `src/carry_trade/modeling/runners/` - runnable model workflows used by the dashboard.
+- `src/carry_trade/modeling/backtests/` - historical backtests.
+- `src/carry_trade/dashboard/` - dashboard log integration.
+- `src/carry_trade/trading/` - paper-only trading research scaffold.
+- `docs/architecture/repository-structure.md` - detailed layout rationale and Microsoft Learn references.
+- `docs/process/branching-strategy.md` - branch naming, PR, and quality-gate rules.
+- `docs/dashboard.md` - dashboard setup and endpoint notes.
 
 ## Quick Start
 
@@ -135,13 +153,13 @@ Run the public-readiness and model-validation checks:
 
 ```bash
 source .venv/bin/activate
-python -m unittest discover -s tests -v
+.venv/bin/python -m unittest discover -s tests -v
 ```
 
 Run Python compile checks:
 
 ```bash
-find . -path './.venv' -prune -o -path './frontend/node_modules' -prune -o -path './frontend/dist' -prune -o -path './frontend/build' -prune -o -name '*.py' -print0 | xargs -0 python -m py_compile
+find . -path './.venv' -prune -o -path './frontend/node_modules' -prune -o -path './frontend/dist' -prune -o -path './frontend/build' -prune -o -name '*.py' -print0 | xargs -0 .venv/bin/python -m py_compile
 ```
 
 Run the frontend production build:
@@ -165,6 +183,7 @@ The frontend uses Vite and commits `frontend/package-lock.json` for reproducible
 - API keys are read from `.env` and environment variables, not committed source.
 - `.env.example` documents optional keys.
 - Runtime logs, CSVs, model binaries, virtual environments, node modules, and build output are ignored.
+- Branch and PR expectations are documented in `docs/process/branching-strategy.md`.
 - If this repository was previously private and contained committed keys in old history, rotate those keys before making the repository public.
 
 ## Suggested Project Narrative

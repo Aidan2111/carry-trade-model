@@ -49,7 +49,7 @@
 
 ## 📁 **CREATED FILES**
 
-### 1. **`improved_ensemble_model.py`** - Main Implementation
+### 1. **`src/carry_trade/modeling/experiments/improved_ensemble_model.py`** - Main Implementation
 - Complete rewrite of the carry trade model
 - Implements all 6 major improvements
 - Class-based architecture: `ImprovedCarryTradeModel`
@@ -60,13 +60,13 @@
   - `train_final_models()`: Stacking ensemble training
   - `predict()`: Predictions with confidence intervals
 
-### 2. **`test_improved_model.py`** - Testing Script
+### 2. **`archive/legacy/test_improved_model.py`** - Historical Testing Script
 - Comprehensive testing framework
 - Creates synthetic test data
 - Validates all improvements
 - Performance comparison utilities
 
-### 3. **`test_improvements.ipynb`** - Interactive Testing
+### 3. **`archive/legacy/test_improvements.ipynb`** - Interactive Testing
 - Jupyter notebook for step-by-step validation
 - Visual testing of each improvement
 - Performance analysis and comparison
@@ -94,11 +94,11 @@ To test the improvements, you have **3 options**:
 #### **Option 1: Command Line Testing**
 ```bash
 cd carry-trade-model
-python test_improved_model.py
+python archive/legacy/test_improved_model.py
 ```
 
 #### **Option 2: Jupyter Notebook Testing**
-1. Open `test_improvements.ipynb` in VS Code
+1. Open `archive/legacy/test_improvements.ipynb` in VS Code
 2. Run cells sequentially to test each improvement
 3. Visual feedback and detailed analysis
 

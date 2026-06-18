@@ -2,12 +2,13 @@ import os
 import pandas as pd
 import requests
 from datetime import datetime
-from news_client import get_newsapi_client
+from carry_trade.data.sources.news_client import get_newsapi_client
+from carry_trade.paths import PROJECT_ROOT
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import yfinance as yf
 
 # --- Setup directories using repo-relative paths ---
-base_dir = os.getenv("CARRY_TRADE_MODEL_DIR", os.path.dirname(os.path.abspath(__file__)))
+base_dir = os.getenv("CARRY_TRADE_MODEL_DIR", str(PROJECT_ROOT))
 log_dir = os.path.join(base_dir, "logs")
 macro_dir = os.path.join(log_dir, "macro")
 fx_dir = os.path.join(log_dir, "fx")

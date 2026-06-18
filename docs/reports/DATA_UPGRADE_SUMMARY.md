@@ -30,7 +30,7 @@ Higher-quality data usually comes from paid providers. Paid FX, macro, news, and
 - Data collectors try configured real sources and skip unavailable sources.
 - Historical random extrapolation fallbacks were removed from public collection paths.
 - Dashboard integrations read local logs where present and otherwise return unavailable data.
-- `live_trading_deployment.py` is paper-only research scaffolding; broker execution is intentionally not implemented.
+- `src/carry_trade/trading/live_trading_deployment.py` is paper-only research scaffolding; broker execution is intentionally not implemented.
 - The Flask API is local-first by default and binds to `127.0.0.1` unless explicitly overridden.
 
 ## Practical Usage

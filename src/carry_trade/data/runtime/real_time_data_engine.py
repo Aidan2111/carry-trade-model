@@ -25,7 +25,8 @@ from threading import Thread, Lock
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from news_client import get_newsapi_client
+from carry_trade.data.sources.news_client import get_newsapi_client
+from carry_trade.paths import PROJECT_ROOT
 import asyncio
 import aiohttp
 from concurrent.futures import ThreadPoolExecutor
@@ -36,7 +37,7 @@ import schedule
 class DataConfig:
     base_dir: str = os.getenv(
         "CARRY_TRADE_MODEL_DIR",
-        os.path.dirname(os.path.abspath(__file__))
+        str(PROJECT_ROOT)
     )
     update_intervals: Dict[str, int] = None  # seconds
     api_keys: Dict[str, str] = None

@@ -1,0 +1,2 @@
+"""Trading research package."""
+

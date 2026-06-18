@@ -9,11 +9,13 @@ import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
 
+from carry_trade.paths import PROJECT_ROOT
+
 class DashboardIntegrator:
     """Integrates carry trade models with dashboard data"""
     
     def __init__(self, base_dir: str = None):
-        self.base_dir = base_dir or os.path.dirname(os.path.abspath(__file__))
+        self.base_dir = base_dir or str(PROJECT_ROOT)
         self.logs_dir = os.path.join(self.base_dir, 'logs')
         
     def run_model_and_update_logs(self) -> Dict[str, Any]:
@@ -21,7 +23,7 @@ class DashboardIntegrator:
         Run the deterministic log-backed model runner and update dashboard logs.
         """
         try:
-            from run_live_model import run_ensemble_model
+            from carry_trade.modeling.runners.run_live_model import run_ensemble_model
 
             result = run_ensemble_model(base_dir=self.base_dir)
             return {

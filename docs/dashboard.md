@@ -66,10 +66,10 @@ A local research dashboard for carry trade modeling and analysis, showing API-ba
 1. **Activate virtual environment**:
    ```bash
    # Windows
-   venv\Scripts\activate
+   .venv\Scripts\activate
    
    # macOS/Linux
-   source venv/bin/activate
+   source .venv/bin/activate
    ```
 
 2. **Install Python dependencies**:
@@ -97,8 +97,6 @@ A local research dashboard for carry trade modeling and analysis, showing API-ba
 3. **Start the development server**:
    ```bash
    npm start
-   # Or use the batch file:
-   run_frontend.bat
    ```
 
 ## API Endpoints
@@ -171,7 +169,7 @@ VITE_API_URL=http://127.0.0.1:8000
 3. Import and use in `Dashboard.tsx`
 
 ### Adding New API Endpoints
-1. Add route in `api_server_real_data.py`
+1. Add route in `src/carry_trade/api/server.py`
 2. Update API service in `frontend/src/services/api.ts`
 3. Add data loading function if needed
 
@@ -210,7 +208,7 @@ Ready for containerization - Dockerfile can be added for production deployment.
 ## Contributing
 
 1. Fork the repository
-2. Create feature branch
+2. Create a branch that follows `docs/process/branching-strategy.md`
 3. Make changes with proper TypeScript typing
 4. Test both frontend and backend
 5. Submit pull request

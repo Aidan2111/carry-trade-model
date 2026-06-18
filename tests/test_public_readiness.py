@@ -6,6 +6,7 @@ import unittest
 
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+PACKAGE_ROOT = REPO_ROOT / "src" / "carry_trade"
 TEXT_SUFFIXES = {
     ".py",
     ".md",
@@ -90,7 +91,9 @@ class PublicReadinessTests(unittest.TestCase):
     def test_frontend_dev_server_docs_match_vite_script(self):
         package = json.loads((REPO_ROOT / "frontend/package.json").read_text(encoding="utf-8"))
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-        dashboard_readme = (REPO_ROOT / "README_DASHBOARD.md").read_text(encoding="utf-8")
+        dashboard_readme = (REPO_ROOT / "docs" / "dashboard.md").read_text(
+            encoding="utf-8"
+        )
 
         self.assertIn("--host 127.0.0.1", package["scripts"]["start"])
         self.assertIn("--port 5173", package["scripts"]["start"])
@@ -98,7 +101,7 @@ class PublicReadinessTests(unittest.TestCase):
         self.assertIn("http://127.0.0.1:5173", dashboard_readme)
 
     def test_canonical_api_uses_local_safe_defaults(self):
-        api = (REPO_ROOT / "api_server_real_data.py").read_text(encoding="utf-8")
+        api = (PACKAGE_ROOT / "api" / "server.py").read_text(encoding="utf-8")
 
         self.assertIn("ENABLE_MODEL_UPDATE_ENDPOINT", api)
         self.assertIn("FLASK_HOST", api)
@@ -117,14 +120,14 @@ class PublicReadinessTests(unittest.TestCase):
 
     def test_public_entrypoints_do_not_create_synthetic_live_market_data(self):
         checked_files = (
-            "api_server_real_data.py",
+            "src/carry_trade/api/server.py",
             "api_server.py",
             "api_server_live.py",
-            "dashboard_integration.py",
-            "enhanced_scraper_simple.py",
-            "enhanced_auto_scraper.py",
-            "real_time_data_engine.py",
-            "run_live_model.py",
+            "src/carry_trade/dashboard/integration.py",
+            "src/carry_trade/data/collectors/enhanced_scraper_simple.py",
+            "src/carry_trade/data/collectors/enhanced_auto_scraper.py",
+            "src/carry_trade/data/runtime/real_time_data_engine.py",
+            "src/carry_trade/modeling/runners/run_live_model.py",
             "carry_model.py",
             "carry_model_live_logged.py",
             "carry_model_live_with_fx_keyed.py",
@@ -149,11 +152,15 @@ class PublicReadinessTests(unittest.TestCase):
         self.assertEqual(offenders, [], f"Synthetic public entrypoint data found: {offenders}")
 
     def test_model_update_paths_do_not_run_legacy_synthetic_scripts(self):
-        integration = (REPO_ROOT / "dashboard_integration.py").read_text(encoding="utf-8")
+        integration = (PACKAGE_ROOT / "dashboard" / "integration.py").read_text(
+            encoding="utf-8"
+        )
         self.assertNotIn("carry_model_live_logged.py", integration)
         self.assertNotIn("subprocess.run", integration)
 
-        live_runner = (REPO_ROOT / "run_live_model.py").read_text(encoding="utf-8")
+        live_runner = (PACKAGE_ROOT / "modeling" / "runners" / "run_live_model.py").read_text(
+            encoding="utf-8"
+        )
         self.assertNotIn("np.random", live_runner)
         self.assertNotIn("placeholder", live_runner.lower())
         self.assertNotIn("benchmark_return", live_runner)
@@ -183,13 +190,15 @@ class PublicReadinessTests(unittest.TestCase):
         self.assertEqual(offenders, [], f"Misleading frontend empty states: {offenders}")
 
     def test_premium_api_clients_do_not_send_keys_over_plain_http(self):
-        client = (REPO_ROOT / "production_api_client.py").read_text(encoding="utf-8")
+        client = (PACKAGE_ROOT / "data" / "providers" / "production_api_client.py").read_text(
+            encoding="utf-8"
+        )
 
         self.assertIn("https://data.fixer.io/api/latest", client)
         self.assertNotIn("http://data.fixer.io/api/latest", client)
 
     def test_live_trading_demo_is_paper_only_by_default(self):
-        trading_demo = (REPO_ROOT / "live_trading_deployment.py").read_text(
+        trading_demo = (PACKAGE_ROOT / "trading" / "live_trading_deployment.py").read_text(
             encoding="utf-8"
         )
 
