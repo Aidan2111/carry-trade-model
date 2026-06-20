@@ -13,11 +13,9 @@ const NewsCard: React.FC<Props> = ({ data }) => {
   };
 
   const getSentimentIcon = (sentiment: number) => {
-    if (sentiment > 0.3) return '🚀';
-    if (sentiment > 0.1) return '�';
-    if (sentiment < -0.3) return '💥';
-    if (sentiment < -0.1) return '�';
-    return '➡️';
+    if (sentiment > 0.1) return 'UP';
+    if (sentiment < -0.1) return 'DN';
+    return 'FLAT';
   };
 
   const getRegionColor = (region: string) => {
@@ -34,16 +32,16 @@ const NewsCard: React.FC<Props> = ({ data }) => {
 
   const getSourceIcon = (source: string) => {
     const sourceMap: { [key: string]: string } = {
-      'Reuters': '📰',
-      'Bloomberg': '📊',
-      'BBC': '🌍',
-      'CNBC': '💼',
-      'Financial Times': '📈',
-      'MarketWatch': '📉',
-      'Yahoo Finance': '🏛️',
-      'WSJ': '📋'
+      'Reuters': 'RTR',
+      'Bloomberg': 'BBG',
+      'BBC': 'BBC',
+      'CNBC': 'CNBC',
+      'Financial Times': 'FT',
+      'MarketWatch': 'MW',
+      'Yahoo Finance': 'YF',
+      'WSJ': 'WSJ'
     };
-    return sourceMap[source] || '📃';
+    return sourceMap[source] || 'SRC';
   };
 
   const getTimeAgo = (timestamp: string) => {
@@ -57,11 +55,14 @@ const NewsCard: React.FC<Props> = ({ data }) => {
   };
 
   return (
-    <div className="trading-card group">
+    <div className="trading-card group p-4 sm:p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-            📈 Market News
+            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-blue-500/30 bg-blue-500/15 text-xs font-bold text-blue-300">
+              NW
+            </span>
+            Market News
           </h3>
           <p className="text-gray-400 text-sm">Financial headlines from configured sources</p>
         </div>
@@ -82,12 +83,12 @@ const NewsCard: React.FC<Props> = ({ data }) => {
                     {news.region}
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-lg">{getSourceIcon(news.source)}</span>
+                    <span className="rounded border border-gray-600 bg-gray-700 px-1.5 py-0.5 text-[10px] font-bold text-gray-300">{getSourceIcon(news.source)}</span>
                     <span className="text-xs text-gray-400 font-medium">{news.source}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">{getSentimentIcon(news.sentiment)}</span>
+                  <span className="rounded border border-gray-600 bg-gray-700 px-1.5 py-0.5 text-[10px] font-bold text-gray-300">{getSentimentIcon(news.sentiment)}</span>
                   <div className={`px-2 py-1 rounded-lg text-xs font-mono ${getSentimentColor(news.sentiment)}`}>
                     {news.sentiment > 0 ? '+' : ''}{news.sentiment.toFixed(2)}
                   </div>
@@ -133,7 +134,7 @@ const NewsCard: React.FC<Props> = ({ data }) => {
       
       {data.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">📰</div>
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-blue-500/30 bg-blue-500/10 text-sm font-bold text-blue-300">NW</div>
           <div className="text-gray-400 font-medium">No market news available</div>
           <div className="text-gray-500 text-sm mt-2">Configure news sources or add a news log</div>
         </div>

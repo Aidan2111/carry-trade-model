@@ -19,18 +19,21 @@ const FXRatesCard: React.FC<Props> = ({ data }) => {
 
   const getStrengthIndicator = (changePercent: number) => {
     const abs = Math.abs(changePercent);
-    if (abs > 1) return '🔥';
-    if (abs > 0.5) return '📈';
-    if (abs > 0.1) return '📊';
-    return '➡️';
+    if (abs > 1) return 'High move';
+    if (abs > 0.5) return 'Firm';
+    if (abs > 0.1) return 'Active';
+    return 'Stable';
   };
 
   return (
-    <div className="trading-card group">
+    <div className="trading-card group p-4 sm:p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-            💱 FX Rates
+            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-blue-500/30 bg-blue-500/15 text-xs font-bold text-blue-300">
+              FX
+            </span>
+            FX Rates
           </h3>
           <p className="text-gray-400 text-sm">Currency rates from the API</p>
         </div>
@@ -80,7 +83,7 @@ const FXRatesCard: React.FC<Props> = ({ data }) => {
       
       {data.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">📊</div>
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-blue-500/30 bg-blue-500/10 text-sm font-bold text-blue-300">FX</div>
           <div className="text-gray-400 font-medium">No FX data available</div>
           <div className="text-gray-500 text-sm mt-2">Start the backend or run data collection</div>
         </div>

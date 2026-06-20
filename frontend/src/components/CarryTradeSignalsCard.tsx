@@ -16,9 +16,9 @@ const CarryTradeSignalsCard: React.FC<Props> = ({ data }) => {
 
   const getActionIcon = (action: string) => {
     switch (action) {
-      case 'BUY': return '📈';
-      case 'SELL': return '📉';
-      default: return '⏸️';
+      case 'BUY': return 'B';
+      case 'SELL': return 'S';
+      default: return 'H';
     }
   };
 
@@ -39,7 +39,9 @@ const CarryTradeSignalsCard: React.FC<Props> = ({ data }) => {
           <div key={`${signal.pair}-${index}`} className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center space-x-3">
-                <div className="text-2xl">{getActionIcon(signal.action)}</div>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gray-600 bg-gray-700 text-xs font-bold text-gray-200">
+                  {getActionIcon(signal.action)}
+                </div>
                 <div>
                   <div className="font-semibold text-gray-100">{signal.pair}</div>
                   <div className="text-sm text-gray-400">

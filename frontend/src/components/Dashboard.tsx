@@ -101,24 +101,24 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-900">
       <header className="navbar sticky top-0 z-50">
-        <div className="max-w-8xl mx-auto px-6">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col gap-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:justify-start lg:gap-6">
+              <div className="flex min-w-0 items-center space-x-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 sm:h-10 sm:w-10">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold gradient-text">
+                <div className="min-w-0">
+                  <h1 className="truncate text-xl font-bold gradient-text sm:text-2xl">
                     CarryTrade Research
                   </h1>
-                  <p className="text-gray-400 text-sm">Currency carry research dashboard</p>
+                  <p className="text-xs text-gray-400 sm:text-sm">Currency carry research dashboard</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 px-3 py-1 bg-gray-800 rounded-lg">
+              <div className="flex w-fit items-center space-x-2 rounded-lg bg-gray-800 px-3 py-1">
                 <div className={`status-indicator ${isConnected ? 'status-live' : 'status-error'}`}></div>
                 <span className="text-sm text-gray-300">
                   {isConnected ? 'API connected' : 'API disconnected'}
@@ -126,8 +126,8 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
+            <div className="flex items-center justify-between gap-3 sm:justify-end sm:gap-4">
+              <div className="text-left sm:text-right">
                 <p className="text-sm text-gray-400">Last updated</p>
                 <p className="text-sm font-mono text-gray-200">
                   {lastUpdate ? lastUpdate.toLocaleTimeString() : 'N/A'}
@@ -137,7 +137,7 @@ const Dashboard: React.FC = () => {
               <button
                 onClick={fetchData}
                 disabled={loading}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <svg className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -160,7 +160,7 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <main className="max-w-8xl mx-auto px-6 py-6">
+      <main className="max-w-8xl mx-auto px-4 py-6 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="trading-card p-6 fade-in-up">
             <div className="flex items-center justify-between mb-4">

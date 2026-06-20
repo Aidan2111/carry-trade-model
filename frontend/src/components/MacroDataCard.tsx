@@ -11,7 +11,7 @@ const MacroDataCard: React.FC<Props> = ({ data }) => {
   };
 
   const getChangeIcon = (change: number) => {
-    return change >= 0 ? '📈' : '📉';
+    return change >= 0 ? 'UP' : 'DN';
   };
 
   return (
@@ -30,7 +30,9 @@ const MacroDataCard: React.FC<Props> = ({ data }) => {
         {data.map((indicator, index) => (
           <div key={`${indicator.indicator}-${index}`} className="flex justify-between items-center p-3 bg-gray-800/50 border border-gray-700/50 rounded-lg">
             <div className="flex items-center space-x-3">
-              <div className="text-xl">{getChangeIcon(indicator.change)}</div>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gray-600 bg-gray-700 text-[10px] font-bold text-gray-200">
+                {getChangeIcon(indicator.change)}
+              </div>
               <div>
                 <div className="font-semibold text-gray-100">{indicator.indicator}</div>
                 <div className="text-sm text-gray-400">

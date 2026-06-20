@@ -22,26 +22,26 @@ const ModelPredictionsCard: React.FC<Props> = ({ data }) => {
     return 'from-red-500 to-rose-500';
   };
 
-  const getPredictionIcon = (predictedReturn: number, confidence: number) => {
-    if (confidence < 0.5) return '❓';
-    if (predictedReturn > 2) return '🚀';
-    if (predictedReturn > 0.5) return '📈';
-    if (predictedReturn < -2) return '💥';
-    if (predictedReturn < -0.5) return '📉';
-    return '➡️';
+  const getDirectionLabel = (predictedReturn: number) => {
+    if (predictedReturn > 0.5) return 'Positive';
+    if (predictedReturn < -0.5) return 'Negative';
+    return 'Neutral';
   };
 
   return (
-    <div className="trading-card group">
-      <div className="flex items-center justify-between mb-6">
+    <div className="trading-card group p-4 sm:p-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-            🤖 Model Outputs
+          <h3 className="flex items-center gap-2 text-xl font-bold text-gray-100">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-blue-500/30 bg-blue-500/15 text-xs font-bold text-blue-300">
+              ML
+            </span>
+            Model Outputs
           </h3>
           <p className="text-gray-400 text-sm">Research forecasts from backend data</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-lg border border-blue-500/30 font-medium">
+          <div className="rounded-lg border border-blue-500/30 bg-blue-500/20 px-3 py-1 text-xs font-medium text-blue-400">
             API Output
           </div>
         </div>
@@ -49,27 +49,27 @@ const ModelPredictionsCard: React.FC<Props> = ({ data }) => {
       
       <div className="space-y-4">
         {data.map((prediction, index) => (
-          <div key={`${prediction.pair}-${index}`} className="bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 overflow-hidden group/prediction">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+          <div key={`${prediction.pair}-${index}`} className="group/prediction overflow-hidden rounded-lg border border-gray-700/50 bg-gray-800/50 transition-all duration-300 hover:border-blue-500/50">
+            <div className="p-4 sm:p-6">
+              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 text-sm font-bold text-white sm:h-12 sm:w-12">
                     {prediction.pair.split('/')[0]}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="font-bold text-gray-100 text-lg">{prediction.pair}</div>
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-400">
                       <span>Backend forecast</span>
                       <span>•</span>
                       <span>{prediction.horizon}-day forecast</span>
                     </div>
                   </div>
                 </div>
-                <div className="text-right flex items-center gap-3">
-                  <div className="text-3xl">
-                    {getPredictionIcon(prediction.predictedReturn, prediction.confidence)}
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                  <div className="rounded-lg border border-gray-600 bg-gray-700/70 px-3 py-2 text-xs font-semibold text-gray-200">
+                    {getDirectionLabel(prediction.predictedReturn)}
                   </div>
-                  <div className={`px-3 py-2 rounded-lg border text-xs font-bold ${getConfidenceColor(prediction.confidence)}`}>
+                  <div className={`rounded-lg border px-3 py-2 text-xs font-bold ${getConfidenceColor(prediction.confidence)}`}>
                     {(prediction.confidence * 100).toFixed(0)}% CONFIDENCE
                   </div>
                 </div>

@@ -14,9 +14,9 @@ const SentimentCard: React.FC<Props> = ({ data }) => {
 
   const getSentimentIcon = (label: string) => {
     switch (label) {
-      case 'positive': return '�';
-      case 'negative': return '�';
-      default: return '⚪';
+      case 'positive': return 'POS';
+      case 'negative': return 'NEG';
+      default: return 'NEU';
     }
   };
 
@@ -28,20 +28,20 @@ const SentimentCard: React.FC<Props> = ({ data }) => {
 
   const getRegionFlag = (region: string) => {
     const flags: { [key: string]: string } = {
-      'USD': '🇺🇸',
-      'EUR': '🇪🇺', 
-      'GBP': '🇬🇧',
-      'JPY': '🇯🇵',
-      'AUD': '🇦🇺',
-      'CAD': '🇨🇦',
-      'CHF': '🇨🇭',
-      'NZD': '🇳🇿',
-      'Global': '🌍',
-      'Asia': '🌏',
-      'Europe': '🌍',
-      'Americas': '🌎'
+      'USD': 'USD',
+      'EUR': 'EUR',
+      'GBP': 'GBP',
+      'JPY': 'JPY',
+      'AUD': 'AUD',
+      'CAD': 'CAD',
+      'CHF': 'CHF',
+      'NZD': 'NZD',
+      'Global': 'GLB',
+      'Asia': 'ASI',
+      'Europe': 'EUR',
+      'Americas': 'AMR'
     };
-    return flags[region] || '🏛️';
+    return flags[region] || 'REG';
   };
 
   const averageSentiment = data.length > 0 
@@ -49,11 +49,14 @@ const SentimentCard: React.FC<Props> = ({ data }) => {
     : 0;
 
   return (
-    <div className="trading-card group">
+    <div className="trading-card group p-4 sm:p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-            🧠 Market Sentiment
+            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-purple-500/30 bg-purple-500/15 text-xs font-bold text-purple-300">
+              SI
+            </span>
+            Market Sentiment
           </h3>
           <p className="text-gray-400 text-sm">AI-powered news analysis</p>
         </div>
@@ -74,7 +77,7 @@ const SentimentCard: React.FC<Props> = ({ data }) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center justify-center w-12 h-12 bg-gray-800 rounded-lg border border-gray-600">
-                    <span className="text-xl">{getRegionFlag(sentiment.region)}</span>
+                    <span className="text-xs font-bold text-gray-300">{getRegionFlag(sentiment.region)}</span>
                   </div>
                   <div>
                     <div className="font-bold text-gray-100 text-lg">{sentiment.region}</div>
@@ -90,7 +93,7 @@ const SentimentCard: React.FC<Props> = ({ data }) => {
                   </div>
                 </div>
                 <div className="text-right flex items-center gap-3">
-                  <div className="text-3xl">
+                  <div className="flex h-9 min-w-9 items-center justify-center rounded-md border border-gray-600 bg-gray-700 px-2 text-[10px] font-bold text-gray-200">
                     {getSentimentIcon(sentiment.label)}
                   </div>
                   <div>
@@ -124,7 +127,7 @@ const SentimentCard: React.FC<Props> = ({ data }) => {
       
       {data.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">🧠</div>
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-purple-500/30 bg-purple-500/10 text-sm font-bold text-purple-300">SI</div>
           <div className="text-gray-400 font-medium">No sentiment data available</div>
           <div className="text-gray-500 text-sm mt-2">Configure news collection or add sentiment logs</div>
         </div>
