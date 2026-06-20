@@ -9,7 +9,11 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 class RepositoryStructureTests(unittest.TestCase):
     def test_importable_code_is_grouped_by_responsibility_under_src(self):
         expected_package_paths = [
+            "src/carry_trade/api/app.py",
+            "src/carry_trade/api/data_provider.py",
+            "src/carry_trade/api/routes.py",
             "src/carry_trade/api/server.py",
+            "src/carry_trade/api/service.py",
             "src/carry_trade/dashboard/integration.py",
             "src/carry_trade/data/sources/news_client.py",
             "src/carry_trade/data/collectors/enhanced_scraper_simple.py",
@@ -60,6 +64,7 @@ class RepositoryStructureTests(unittest.TestCase):
         self.assertIn("src/carry_trade", content)
         self.assertIn("data/collectors", content)
         self.assertIn("modeling/experiments", content)
+        self.assertIn("scripts/system_evaluation.py", content)
         self.assertIn("docs/process/branching-strategy.md", content)
         self.assertIn("root compatibility entrypoints", content)
 
@@ -96,6 +101,7 @@ class RepositoryStructureTests(unittest.TestCase):
         self.assertIn("release/", content)
         self.assertIn("pull request", content)
         self.assertIn("quality gate", content)
+        self.assertIn("scripts/system_evaluation.py", content)
 
     def test_pull_request_template_documents_review_and_verification_gates(self):
         template = REPO_ROOT / ".github/pull_request_template.md"
@@ -107,6 +113,7 @@ class RepositoryStructureTests(unittest.TestCase):
         self.assertIn("testing", content)
         self.assertIn("risk", content)
         self.assertIn("docs updated", content)
+        self.assertIn("scripts/system_evaluation.py", content)
 
 
 if __name__ == "__main__":

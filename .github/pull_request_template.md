@@ -6,6 +6,7 @@
 
 - [ ] `.venv/bin/python -m unittest discover -s tests -v`
 - [ ] Python compile check
+- [ ] `.venv/bin/python scripts/system_evaluation.py`
 - [ ] `cd frontend && npm run build`
 - [ ] Other:
 

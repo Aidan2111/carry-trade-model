@@ -59,7 +59,7 @@ Not financial advice. This software is for research, education, and portfolio de
 
 Use these files first:
 
-- `api_server_real_data.py` - root compatibility wrapper for the Flask API in `src/carry_trade/api/server.py`.
+- `api_server_real_data.py` - root compatibility wrapper for the Flask app factory and routes in `src/carry_trade/api/`.
 - `frontend/` - React TypeScript dashboard.
 - `enhanced_scraper_simple.py` - root compatibility wrapper for the practical data collector in `src/carry_trade/data/collectors/`.
 - `improved_ensemble_model.py` - root compatibility import for the model code in `src/carry_trade/modeling/experiments/`.
@@ -160,6 +160,12 @@ Run Python compile checks:
 
 ```bash
 find . -path './.venv' -prune -o -path './frontend/node_modules' -prune -o -path './frontend/dist' -prune -o -path './frontend/build' -prune -o -name '*.py' -print0 | xargs -0 .venv/bin/python -m py_compile
+```
+
+Run the deterministic API system evaluation:
+
+```bash
+.venv/bin/python scripts/system_evaluation.py
 ```
 
 Run the frontend production build:

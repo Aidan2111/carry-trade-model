@@ -29,7 +29,7 @@ References:
 ├── run_live_model.py                    # root compatibility entrypoint
 ├── carry_model*.py                      # historical compatibility entrypoints
 ├── src/carry_trade/
-│   ├── api/                             # Flask API implementation
+│   ├── api/                             # Flask app factory, routes, services, providers
 │   ├── dashboard/                       # API/model dashboard integration
 │   ├── data/
 │   │   ├── collectors/                  # local collection scripts
@@ -56,7 +56,7 @@ References:
 
 ## Package Boundaries
 
-`src/carry_trade/api` owns the maintained Flask API. It should not contain data-collection scheduling or model-training logic beyond calling packaged interfaces.
+`src/carry_trade/api` owns the maintained Flask API. `app.py` builds the Flask app and CORS settings, `routes.py` registers HTTP routes, `service.py` aggregates dashboard payloads, `data_provider.py` reads local/live data, and `server.py` remains a compatibility module. HTTP concerns should stay out of provider code, and source/provider logic should stay out of route functions.
 
 `src/carry_trade/data/collectors` owns local data collection scripts. `src/carry_trade/data/sources` owns shared low-level source clients. `src/carry_trade/data/providers` owns optional premium clients. `src/carry_trade/data/runtime` owns longer-running data-engine code. Optional API keys remain environment-driven.
 
@@ -69,6 +69,14 @@ References:
 ## Root Compatibility Entrypoints
 
 The root compatibility entrypoints exist so older commands and README examples continue to work. They should stay thin: add `src/` to `sys.path`, import the packaged function, and call it. New implementation code belongs under `src/carry_trade`.
+
+## System Evaluation
+
+`scripts/system_evaluation.py` runs a no-network API contract evaluation through the Flask test client with deterministic fixture data. It verifies the health route, dashboard payload shape, camelCase frontend contract, and disabled-by-default model update gate. Run it before public-facing changes or API/dashboard refactors:
+
+```bash
+.venv/bin/python scripts/system_evaluation.py
+```
 
 ## Documentation Placement
 

@@ -100,15 +100,22 @@ class PublicReadinessTests(unittest.TestCase):
         self.assertIn("http://127.0.0.1:5173", readme)
         self.assertIn("http://127.0.0.1:5173", dashboard_readme)
 
-    def test_canonical_api_uses_local_safe_defaults(self):
-        api = (PACKAGE_ROOT / "api" / "server.py").read_text(encoding="utf-8")
+    def test_readme_documents_system_evaluation_command(self):
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
 
-        self.assertIn("ENABLE_MODEL_UPDATE_ENDPOINT", api)
-        self.assertIn("FLASK_HOST", api)
-        self.assertIn("127.0.0.1", api)
-        self.assertIn("CORS_ORIGINS", api)
-        self.assertNotIn("CORS(app)  # Enable CORS for all routes", api)
-        self.assertNotIn("app.run(host='0.0.0.0'", api)
+        self.assertIn(".venv/bin/python scripts/system_evaluation.py", readme)
+
+    def test_canonical_api_uses_local_safe_defaults(self):
+        app_factory = (PACKAGE_ROOT / "api" / "app.py").read_text(encoding="utf-8")
+        routes = (PACKAGE_ROOT / "api" / "routes.py").read_text(encoding="utf-8")
+
+        self.assertIn("ENABLE_MODEL_UPDATE_ENDPOINT", app_factory)
+        self.assertIn("ENABLE_MODEL_UPDATE_ENDPOINT", routes)
+        self.assertIn("FLASK_HOST", app_factory)
+        self.assertIn("127.0.0.1", app_factory)
+        self.assertIn("CORS_ORIGINS", app_factory)
+        self.assertNotIn("CORS(app)  # Enable CORS for all routes", app_factory)
+        self.assertNotIn("app.run(host='0.0.0.0'", app_factory)
 
     def test_legacy_api_servers_delegate_to_canonical_real_data_api(self):
         for filename in ("api_server.py", "api_server_live.py"):

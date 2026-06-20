@@ -37,6 +37,7 @@ Expected local verification before merge:
 ```bash
 .venv/bin/python -m unittest discover -s tests -v
 find . -path './.venv' -prune -o -path './frontend/node_modules' -prune -o -path './frontend/dist' -prune -o -path './frontend/build' -prune -o -name '*.py' -print0 | xargs -0 .venv/bin/python -m py_compile
+.venv/bin/python scripts/system_evaluation.py
 cd frontend && npm run build
 ```
 
@@ -52,4 +53,3 @@ When this repo is managed through GitHub or Azure Repos policies, protect `main`
 - Required review for non-trivial code, data, or public-facing docs changes.
 
 These settings follow the same intent as the Well-Architected Framework: standardized practices, peer review, quality gates, and an audit trail.
-

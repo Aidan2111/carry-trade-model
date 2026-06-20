@@ -169,9 +169,10 @@ VITE_API_URL=http://127.0.0.1:8000
 3. Import and use in `Dashboard.tsx`
 
 ### Adding New API Endpoints
-1. Add route in `src/carry_trade/api/server.py`
-2. Update API service in `frontend/src/services/api.ts`
-3. Add data loading function if needed
+1. Add the route in `src/carry_trade/api/routes.py`.
+2. Put payload aggregation in `src/carry_trade/api/service.py` when the endpoint combines multiple provider calls.
+3. Put data-source reads in `src/carry_trade/api/data_provider.py` when the endpoint needs new backend data.
+4. Update the frontend API service in `frontend/src/services/api.ts`.
 
 ### Styling Guidelines
 - Use Tailwind utility classes
