@@ -2,6 +2,8 @@
 
 A Python and React research project for exploring currency carry trade signals, FX data collection, macro indicators, news sentiment, and dashboard-driven analysis.
 
+Built by [Aidan Marshall](https://aidanmarshall.ai/), a Dallas-based AI engineer focused on agentic AI systems, enterprise automation, and applied AI engineering.
+
 This repository is intentionally framed as a research and engineering project, not a trading product. The current public-facing flow favors traceable data, explicit fallbacks, and honest labels over inflated claims.
 
 ## Why This Project Exists
@@ -67,6 +69,12 @@ Use these files first:
 - `tests/test_model_validation.py` - model-theory checks: forward-looking target construction, no-skill-on-noise leakage detection, and planted-signal recovery.
 
 Several older scripts remain in `archive/legacy/` and `docs/reports/` to show project history. Treat them as exploratory unless the README calls them out above.
+
+## Author
+
+- Website: [aidanmarshall.ai](https://aidanmarshall.ai/)
+- GitHub: [Aidan2111](https://github.com/Aidan2111)
+- LinkedIn: [Aidan Marshall](https://www.linkedin.com/in/aidan-marshall77)
 
 ## Repository Layout
 
