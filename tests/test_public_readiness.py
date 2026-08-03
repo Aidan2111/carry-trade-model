@@ -105,6 +105,32 @@ class PublicReadinessTests(unittest.TestCase):
 
         self.assertIn(".venv/bin/python scripts/system_evaluation.py", readme)
 
+    def test_distribution_metadata_declares_runtime_dependencies(self):
+        pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        requirements = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8")
+
+        self.assertIn("dependencies = [", pyproject)
+        self.assertIn("[project.urls]", pyproject)
+        dependency_lines = (
+            line.strip()
+            for line in requirements.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        )
+        for dependency in dependency_lines:
+            with self.subTest(dependency=dependency):
+                self.assertIn(f'"{dependency}"', pyproject)
+
+    def test_canonical_model_console_output_is_portable(self):
+        model = (
+            REPO_ROOT
+            / "src/carry_trade/modeling/experiments/improved_ensemble_model.py"
+        ).read_text(encoding="utf-8")
+
+        self.assertTrue(
+            model.isascii(),
+            "The canonical model should use ASCII status output for legacy Windows consoles.",
+        )
+
     def test_canonical_api_uses_local_safe_defaults(self):
         app_factory = (PACKAGE_ROOT / "api" / "app.py").read_text(encoding="utf-8")
         routes = (PACKAGE_ROOT / "api" / "routes.py").read_text(encoding="utf-8")
