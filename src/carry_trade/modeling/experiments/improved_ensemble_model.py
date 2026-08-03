@@ -89,7 +89,7 @@ class ImprovedCarryTradeModel:
             ))
         else:
             if 'xgboost' not in self._optional_model_warnings_printed:
-                print(f"⚠️ Skipping XGBoost: {XGBOOST_IMPORT_ERROR}")
+                print(f"Warning: skipping XGBoost: {XGBOOST_IMPORT_ERROR}")
                 self._optional_model_warnings_printed.add('xgboost')
 
         if lgb is not None:
@@ -104,7 +104,7 @@ class ImprovedCarryTradeModel:
             ))
         else:
             if 'lightgbm' not in self._optional_model_warnings_printed:
-                print(f"⚠️ Skipping LightGBM: {LIGHTGBM_IMPORT_ERROR}")
+                print(f"Warning: skipping LightGBM: {LIGHTGBM_IMPORT_ERROR}")
                 self._optional_model_warnings_printed.add('lightgbm')
 
         return models
@@ -117,34 +117,34 @@ class ImprovedCarryTradeModel:
         """
         Load and prepare data with enhanced feature engineering
         """
-        print("📊 Loading and preparing data...")
+        print("Loading and preparing data...")
         
         # Load FX data
         try:
             fx_data = self._load_fx_data()
         except Exception as e:
-            print(f"⚠️ Error loading FX data: {e}")
+            print(f"Warning: error loading FX data: {e}")
             return None
         
         # Load macro data
         try:
             macro_data = self._load_macro_data()
         except Exception as e:
-            print(f"⚠️ Error loading macro data: {e}")
+            print(f"Warning: error loading macro data: {e}")
             return None
         
         # Load sentiment data
         try:
             sentiment_data = self._load_sentiment_data()
         except Exception as e:
-            print(f"⚠️ Error loading sentiment data: {e}")
+            print(f"Warning: error loading sentiment data: {e}")
             return None
         
         # Merge all data
         data = self._merge_data(fx_data, macro_data, sentiment_data)
         
         if data is None or data.empty:
-            print("❌ No data available after merging")
+            print("Error: no data available after merging")
             return None
         
         # Enhanced feature engineering
@@ -153,8 +153,8 @@ class ImprovedCarryTradeModel:
         # Data quality checks
         data = self._data_quality_checks(data)
         
-        print(f"✅ Data preparation complete. Shape: {data.shape}")
-        print(f"📅 Date range: {data['date'].min()} to {data['date'].max()}")
+        print(f"Data preparation complete. Shape: {data.shape}")
+        print(f"Date range: {data['date'].min()} to {data['date'].max()}")
         
         return data
     
@@ -223,7 +223,7 @@ class ImprovedCarryTradeModel:
             return macro_data
         
         # Create default macro data if file doesn't exist
-        print("⚠️ Creating default macro data")
+        print("Warning: creating default macro data")
         dates = pd.date_range(start='2020-01-01', end=datetime.now(), freq='D')
         macro_data = pd.DataFrame({
             'date': dates,
@@ -261,7 +261,7 @@ class ImprovedCarryTradeModel:
                     return sentiment_data[['date', *wide_sentiment_cols]]
 
                 if not {'Region', 'Sentiment'}.issubset(sentiment_data.columns):
-                    print("⚠️ Sentiment log missing Region/Sentiment columns; using neutral sentiment")
+                    print("Warning: sentiment log missing Region/Sentiment columns; using neutral sentiment")
                     return pd.DataFrame({
                         'date': sentiment_data['date'],
                         'sentiment_usd': 0.0,
@@ -287,7 +287,7 @@ class ImprovedCarryTradeModel:
                 return sentiment_pivot
         
         # Create default sentiment data
-        print("⚠️ Creating default sentiment data")
+        print("Warning: creating default sentiment data")
         dates = pd.date_range(start='2020-01-01', end=datetime.now(), freq='D')
         sentiment_data = pd.DataFrame({
             'date': dates,
@@ -300,7 +300,7 @@ class ImprovedCarryTradeModel:
     
     def _merge_data(self, fx_data, macro_data, sentiment_data):
         """Merge all data sources"""
-        print("🔄 Merging data sources...")
+        print("Merging data sources...")
         
         # Align date formats
         for df in [fx_data, macro_data, sentiment_data]:
@@ -330,7 +330,7 @@ class ImprovedCarryTradeModel:
         """
         Create enhanced features including technical indicators
         """
-        print("🛠️ Creating enhanced features...")
+        print("Creating enhanced features...")
         
         # Basic carry trade features
         data['interest_diff_usd'] = data['US_FedFunds'] - data['UAH_Rate']
@@ -371,7 +371,7 @@ class ImprovedCarryTradeModel:
                 data['usd_bb_position'] = (data['USD_UAH'] - data['usd_bb_lower']) / (data['usd_bb_upper'] - data['usd_bb_lower'])
                 
             except Exception as e:
-                print(f"⚠️ Error creating technical indicators: {e}")
+                print(f"Warning: error creating technical indicators: {e}")
         
         # Macro feature engineering
         data['yield_curve_slope'] = data.get('US_YieldCurve', 0)
@@ -385,14 +385,14 @@ class ImprovedCarryTradeModel:
         # Cross-asset features
         data['fx_correlation'] = data['USD_UAH'].rolling(30).corr(data['EUR_UAH'])
         
-        print(f"✅ Feature engineering complete. New shape: {data.shape}")
+        print(f"Feature engineering complete. New shape: {data.shape}")
         return data
     
     def _data_quality_checks(self, data):
         """
         Perform data quality checks and cleaning
         """
-        print("🔍 Performing data quality checks...")
+        print("Performing data quality checks...")
         
         # Remove rows with all NaN in key columns
         key_columns = ['USD_UAH', 'EUR_UAH']
@@ -407,7 +407,7 @@ class ImprovedCarryTradeModel:
                 suspicious = daily_move > 0.25
                 if suspicious.any():
                     print(
-                        f"⚠️ {col}: {suspicious.sum()} daily moves above 25%; "
+                        f"Warning: {col}: {suspicious.sum()} daily moves above 25%; "
                         "verify these against the raw source"
                     )
         
@@ -416,16 +416,16 @@ class ImprovedCarryTradeModel:
         date_diff = data['date'].diff().dt.days
         large_gaps = date_diff > 7
         if large_gaps.any():
-            print(f"⚠️ Found {large_gaps.sum()} large data gaps (>7 days)")
+            print(f"Warning: found {large_gaps.sum()} large data gaps (>7 days)")
         
-        print(f"✅ Data quality checks complete. Final shape: {data.shape}")
+        print(f"Data quality checks complete. Final shape: {data.shape}")
         return data
     
     def prepare_features_and_targets(self, data):
         """
         Prepare feature matrix and target variables
         """
-        print("🎯 Preparing features and targets...")
+        print("Preparing features and targets...")
         
         # Define feature columns
         feature_columns = [
@@ -449,7 +449,7 @@ class ImprovedCarryTradeModel:
         
         # Only include features that exist in the data
         available_features = [col for col in feature_columns if col in data.columns]
-        print(f"📊 Using {len(available_features)} features out of {len(feature_columns)} possible")
+        print(f"Using {len(available_features)} features out of {len(feature_columns)} possible")
         
         # Prepare feature matrix
         X = data[available_features].copy()
@@ -468,11 +468,11 @@ class ImprovedCarryTradeModel:
         # Handle remaining NaN values in features
         X = X.ffill().fillna(0)
         
-        print(f"✅ Feature preparation complete:")
-        print(f"   📈 Features shape: {X.shape}")
-        print(f"   🎯 USD targets: {len(y_usd)} samples")
-        print(f"   🎯 EUR targets: {len(y_eur)} samples")
-        print(f"   📅 Date range: {dates.min()} to {dates.max()}")
+        print("Feature preparation complete:")
+        print(f"   Features shape: {X.shape}")
+        print(f"   USD targets: {len(y_usd)} samples")
+        print(f"   EUR targets: {len(y_eur)} samples")
+        print(f"   Date range: {dates.min()} to {dates.max()}")
         
         return X, y_usd, y_eur, dates, available_features
     
@@ -480,7 +480,7 @@ class ImprovedCarryTradeModel:
         """
         Perform proper time series cross-validation
         """
-        print("⏰ Starting time series cross-validation...")
+        print("Starting time series cross-validation...")
         
         # Use TimeSeriesSplit with a purge gap matching the 7-day forward
         # target so train-set targets cannot overlap the validation window.
@@ -493,7 +493,7 @@ class ImprovedCarryTradeModel:
         }
         
         for fold, (train_idx, val_idx) in enumerate(tscv.split(X)):
-            print(f"🔄 Processing fold {fold + 1}/5...")
+            print(f"Processing fold {fold + 1}/5...")
             
             X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
             y_usd_train, y_usd_val = y_usd.iloc[train_idx], y_usd.iloc[val_idx]
@@ -530,9 +530,9 @@ class ImprovedCarryTradeModel:
         avg_usd_score = np.mean(results['usd_scores'])
         avg_eur_score = np.mean(results['eur_scores'])
         
-        print(f"✅ Time series validation complete:")
-        print(f"   📊 Average USD R²: {avg_usd_score:.4f} (±{np.std(results['usd_scores']):.4f})")
-        print(f"   📊 Average EUR R²: {avg_eur_score:.4f} (±{np.std(results['eur_scores']):.4f})")
+        print("Time series validation complete:")
+        print(f"   Average USD R-squared: {avg_usd_score:.4f} (+/-{np.std(results['usd_scores']):.4f})")
+        print(f"   Average EUR R-squared: {avg_eur_score:.4f} (+/-{np.std(results['eur_scores']):.4f})")
         
         return results
     
@@ -585,7 +585,7 @@ class ImprovedCarryTradeModel:
         """
         Train final models on all available data
         """
-        print("🎓 Training final models...")
+        print("Training final models...")
         
         # Feature scaling
         self.scalers['features'] = RobustScaler()
@@ -597,7 +597,7 @@ class ImprovedCarryTradeModel:
         self.feature_selectors['selector'] = selector
         
         selected_features = [feature_names[i] for i in selector.get_support(indices=True)]
-        print(f"📋 Selected {len(selected_features)} features: {selected_features}")
+        print(f"Selected {len(selected_features)} features: {selected_features}")
         
         # Create final ensemble models
         base_models = self._build_base_models(n_estimators=200)
@@ -622,7 +622,7 @@ class ImprovedCarryTradeModel:
         )
         self.models['eur'].fit(X_selected, y_eur)
         
-        print("✅ Final models trained successfully!")
+        print("Final models trained successfully.")
         
         return selected_features
     
@@ -701,20 +701,20 @@ class ImprovedCarryTradeModel:
         """
         Run the complete improved modeling pipeline
         """
-        print("🚀 Starting Improved Carry Trade Model Pipeline...")
+        print("Starting Improved Carry Trade Model Pipeline...")
         print("=" * 60)
         
         # Step 1: Load and prepare data
         data = self.load_and_prepare_data()
         if data is None:
-            print("❌ Pipeline failed: No data available")
+            print("Error: pipeline failed because no data is available")
             return None
         
         # Step 2: Prepare features and targets
         X, y_usd, y_eur, dates, feature_names = self.prepare_features_and_targets(data)
         
         if len(X) < 100:
-            print("⚠️ Warning: Limited data available, results may not be reliable")
+            print("Warning: limited data available; results may not be reliable")
         
         # Step 3: Time series cross-validation
         cv_results = self.time_series_split_validation(X, y_usd, y_eur, dates)
@@ -726,7 +726,7 @@ class ImprovedCarryTradeModel:
         self._save_results(cv_results, selected_features)
         
         print("=" * 60)
-        print("✅ Improved pipeline completed successfully!")
+        print("Improved pipeline completed successfully.")
         
         return {
             'cv_results': cv_results,
@@ -752,7 +752,7 @@ class ImprovedCarryTradeModel:
         features_df = pd.DataFrame({'feature': selected_features})
         features_df.to_csv(os.path.join(results_dir, 'selected_features.csv'), index=False)
         
-        print(f"📁 Results saved to {results_dir}")
+        print(f"Results saved to {results_dir}")
 
 
 if __name__ == "__main__":
@@ -761,8 +761,8 @@ if __name__ == "__main__":
     results = model.run_full_pipeline()
     
     if results:
-        print(f"\n📊 Final Results Summary:")
-        print(f"   🎯 Data points: {results['data_shape'][0]}")
-        print(f"   📈 Features: {results['data_shape'][1]}")
-        print(f"   📅 Date range: {results['date_range'][0]} to {results['date_range'][1]}")
-        print(f"   🏆 Selected features: {len(results['selected_features'])}")
+        print("\nFinal Results Summary:")
+        print(f"   Data points: {results['data_shape'][0]}")
+        print(f"   Features: {results['data_shape'][1]}")
+        print(f"   Date range: {results['date_range'][0]} to {results['date_range'][1]}")
+        print(f"   Selected features: {len(results['selected_features'])}")

@@ -112,7 +112,7 @@ cd carry-trade-model
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
-python -m pip install -r requirements.txt
+python -m pip install -e .
 ```
 
 Optional API keys:
@@ -143,7 +143,7 @@ Useful endpoints:
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm start
 ```
 
@@ -197,6 +197,7 @@ The frontend uses Vite and commits `frontend/package-lock.json` for reproducible
 - API keys are read from `.env` and environment variables, not committed source.
 - `.env.example` documents optional keys.
 - Runtime logs, CSVs, model binaries, virtual environments, node modules, and build output are ignored.
+- `pyproject.toml` is the canonical Python dependency manifest; `requirements.txt` remains for tooling that expects a requirements file.
 - Branch and PR expectations are documented in `docs/process/branching-strategy.md`.
 - If this repository was previously private and contained committed keys in old history, rotate those keys before making the repository public.
 
