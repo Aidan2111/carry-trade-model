@@ -98,7 +98,7 @@ The project uses a `src/carry_trade/` package so current implementation code is 
 
 ### Prerequisites
 
-- Python 3.9 or newer. Python 3.11 is recommended.
+- Python 3.11 or newer.
 - Node.js 20.19 or newer for the Vite dashboard.
 - Git.
 - macOS only, for XGBoost/LightGBM: `brew install libomp` if you want boosted-tree models. Without `libomp`, the improved model falls back to scikit-learn estimators.
@@ -115,6 +115,16 @@ python -m pip install --upgrade pip setuptools wheel
 python -m pip install -e .
 ```
 
+The default installation covers the API, deterministic model runner, and model
+validation path. Install data collectors and optional boosted-tree backends
+when you need them:
+
+```bash
+python -m pip install -e ".[data]"     # external data collectors/providers
+python -m pip install -e ".[boosted]"  # LightGBM and XGBoost
+python -m pip install -e ".[all]"      # every supported runtime feature
+```
+
 Optional API keys:
 
 ```bash
@@ -126,8 +136,11 @@ cp .env.example .env
 
 ```bash
 source .venv/bin/activate
-python api_server_real_data.py
+carry-trade-api
 ```
+
+`python api_server_real_data.py` remains available as a compatibility command
+for existing checkouts.
 
 The API runs at `http://127.0.0.1:8000` by default. Use `FLASK_HOST`, `FLASK_PORT`, and `CORS_ORIGINS` if you intentionally expose it elsewhere.
 
@@ -164,6 +177,14 @@ source .venv/bin/activate
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
+Build and validate the Python distribution:
+
+```bash
+.venv/bin/python -m pip install -e ".[all,dev]"
+.venv/bin/python -m build
+.venv/bin/python -m twine check dist/*
+```
+
 Run Python compile checks:
 
 ```bash
@@ -183,11 +204,11 @@ cd frontend
 npm run build
 ```
 
-Run npm audit:
+Run the full frontend dependency audit:
 
 ```bash
 cd frontend
-npm audit --omit=dev
+npm audit
 ```
 
 The frontend uses Vite and commits `frontend/package-lock.json` for reproducible installs.
@@ -198,6 +219,8 @@ The frontend uses Vite and commits `frontend/package-lock.json` for reproducible
 - `.env.example` documents optional keys.
 - Runtime logs, CSVs, model binaries, virtual environments, node modules, and build output are ignored.
 - `pyproject.toml` is the canonical Python dependency manifest; `requirements.txt` remains for tooling that expects a requirements file.
+- Runtime dependencies use compatible bounds; install optional extras instead
+  of pulling every data and boosted-model package into the default API setup.
 - Branch and PR expectations are documented in `docs/process/branching-strategy.md`.
 - If this repository was previously private and contained committed keys in old history, rotate those keys before making the repository public.
 
@@ -214,6 +237,16 @@ This is a good recruiter-facing story:
 - Some older files are preserved as project history and are not the recommended entry point.
 - External data availability depends on providers, API keys, quotas, and local logs.
 
+## Project policies
+
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Support](SUPPORT.md)
+- [Governance](GOVERNANCE.md)
+- [Changelog](CHANGELOG.md)
+- [Financial disclaimer](DISCLAIMER.md)
+
 ## License
 
-MIT. See `LICENSE`.
+MIT. See `LICENSE`. The separate research and financial-use limitations are
+described in `DISCLAIMER.md`.

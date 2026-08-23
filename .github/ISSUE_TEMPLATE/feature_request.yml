@@ -1,0 +1,24 @@
+name: Feature request
+description: Propose a focused research, data, API, dashboard, or reproducibility improvement.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What concrete workflow or limitation should change?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: Describe observable behavior, data provenance, and validation expectations.
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Research and safety considerations
+      description: Note methodology, licensing, credentials, compatibility, or trading-safety implications.

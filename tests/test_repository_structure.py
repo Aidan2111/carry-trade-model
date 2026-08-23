@@ -48,10 +48,22 @@ class RepositoryStructureTests(unittest.TestCase):
 
         self.assertEqual(root_python_files - allowed_root_files, set())
 
-    def test_root_markdown_files_are_limited_to_the_primary_readme(self):
+    def test_root_markdown_files_are_limited_to_public_project_docs(self):
         root_markdown_files = {path.name for path in REPO_ROOT.glob("*.md")}
 
-        self.assertEqual(root_markdown_files, {"README.md"})
+        self.assertEqual(
+            root_markdown_files,
+            {
+                "CHANGELOG.md",
+                "CODE_OF_CONDUCT.md",
+                "CONTRIBUTING.md",
+                "DISCLAIMER.md",
+                "GOVERNANCE.md",
+                "README.md",
+                "SECURITY.md",
+                "SUPPORT.md",
+            },
+        )
 
     def test_repository_structure_doc_captures_current_layout(self):
         structure_doc = REPO_ROOT / "docs/architecture/repository-structure.md"
@@ -114,6 +126,25 @@ class RepositoryStructureTests(unittest.TestCase):
         self.assertIn("risk", content)
         self.assertIn("docs updated", content)
         self.assertIn("scripts/system_evaluation.py", content)
+
+    def test_public_project_and_contributor_files_exist(self):
+        required_files = (
+            "CHANGELOG.md",
+            "CODE_OF_CONDUCT.md",
+            "CONTRIBUTING.md",
+            "DISCLAIMER.md",
+            "GOVERNANCE.md",
+            "SECURITY.md",
+            "SUPPORT.md",
+            ".github/ISSUE_TEMPLATE/bug_report.yml",
+            ".github/ISSUE_TEMPLATE/feature_request.yml",
+            ".github/ISSUE_TEMPLATE/config.yml",
+            ".github/workflows/release.yml",
+        )
+
+        for relative_path in required_files:
+            with self.subTest(path=relative_path):
+                self.assertTrue((REPO_ROOT / relative_path).is_file())
 
 
 if __name__ == "__main__":
