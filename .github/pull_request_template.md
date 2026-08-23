@@ -8,6 +8,8 @@
 - [ ] Python compile check
 - [ ] `.venv/bin/python scripts/system_evaluation.py`
 - [ ] `cd frontend && npm run build`
+- [ ] `cd frontend && npm audit`
+- [ ] Python distribution build and `twine check`
 - [ ] Other:
 
 ## Risk

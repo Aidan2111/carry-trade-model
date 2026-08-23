@@ -1,0 +1,51 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20.19.0"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Verify tag matches package version
+        run: |
+          python -c "import os, pathlib, sys, tomllib; version = tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version']; sys.exit(0 if os.environ['GITHUB_REF_NAME'] == f'v{version}' else f'tag must be v{version}')"
+      - name: Verify Python project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[all,dev]"
+          python -m unittest discover -s tests -v
+          python scripts/system_evaluation.py
+          python -m build
+          python -m twine check dist/*
+          python -c "from pathlib import Path; import subprocess, sys; wheel = next(Path('dist').glob('*.whl')); subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--force-reinstall', '--no-deps', str(wheel)])"
+          python -c "from importlib.metadata import entry_points; names = {entry.name for entry in entry_points(group='console_scripts')}; assert {'carry-trade-api', 'carry-trade-model'} <= names"
+      - name: Verify frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+          npm audit
+      - name: Package frontend artifact
+        run: tar -czf "dist/carry-trade-dashboard-${GITHUB_REF_NAME}.tar.gz" -C frontend dist
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes --title "$GITHUB_REF_NAME"

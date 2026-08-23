@@ -57,7 +57,7 @@ A local research dashboard for carry trade modeling and analysis, showing API-ba
 ## Installation & Setup
 
 ### Prerequisites
-- Python 3.9+
+- Python 3.11+
 - Node.js 20.19+ for the Vite dashboard
 - Virtual environment (recommended)
 

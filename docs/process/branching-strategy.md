@@ -38,10 +38,25 @@ Expected local verification before merge:
 .venv/bin/python -m unittest discover -s tests -v
 find . -path './.venv' -prune -o -path './frontend/node_modules' -prune -o -path './frontend/dist' -prune -o -path './frontend/build' -prune -o -name '*.py' -print0 | xargs -0 .venv/bin/python -m py_compile
 .venv/bin/python scripts/system_evaluation.py
-cd frontend && npm run build
+.venv/bin/python -m build
+.venv/bin/python -m twine check dist/*
+cd frontend && npm run build && npm audit
 ```
 
-Run `npm audit --omit=dev` from `frontend/` before public-release or dependency-security changes.
+Run the full `npm audit` from `frontend/` before public-release or
+dependency-security changes; development build tools are part of the trusted
+release path.
+
+## Release Process
+
+1. Update the version in `pyproject.toml` and the notes in `CHANGELOG.md`.
+2. Merge the release change to a green `main` after the full quality gate.
+3. Create and push a matching tag, such as `v0.1.0`.
+4. `.github/workflows/release.yml` repeats the Python and frontend checks and
+   creates a GitHub release containing Python distributions and a built
+   dashboard artifact.
+5. Publish to a package index only after the intended distribution scope and
+   trusted-publishing configuration are explicitly reviewed.
 
 ## Branch Protection Settings
 

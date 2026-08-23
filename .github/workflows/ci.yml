@@ -18,7 +18,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.12"
+            frontend: false
+          - os: ubuntu-latest
+            python-version: "3.13"
+            frontend: false
+          - os: ubuntu-latest
+            python-version: "3.11"
+            frontend: true
+          - os: windows-latest
+            python-version: "3.11"
+            frontend: true
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -28,12 +40,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -e .
+          python -m pip install -e ".[all,dev]"
 
       - name: Run Python tests
         run: python -m unittest discover -s tests -v
@@ -46,7 +58,15 @@ jobs:
       - name: Run deterministic system evaluation
         run: python scripts/system_evaluation.py
 
+      - name: Validate Python distribution
+        run: |
+          python -m build
+          python -m twine check dist/*
+          python -c "from pathlib import Path; import subprocess, sys; wheel = next(Path('dist').glob('*.whl')); subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--force-reinstall', '--no-deps', str(wheel)])"
+          python -c "from importlib.metadata import entry_points; names = {entry.name for entry in entry_points(group='console_scripts')}; assert {'carry-trade-api', 'carry-trade-model'} <= names"
+
       - name: Set up Node
+        if: matrix.frontend
         uses: actions/setup-node@v7
         with:
           node-version: "20.19.0"
@@ -54,13 +74,16 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend dependencies
+        if: matrix.frontend
         working-directory: frontend
         run: npm ci
 
       - name: Build frontend
+        if: matrix.frontend
         working-directory: frontend
         run: npm run build
 
-      - name: Audit production frontend dependencies
+      - name: Audit all frontend dependencies
+        if: matrix.frontend
         working-directory: frontend
-        run: npm audit --omit=dev
+        run: npm audit

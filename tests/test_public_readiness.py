@@ -120,6 +120,18 @@ class PublicReadinessTests(unittest.TestCase):
             with self.subTest(dependency=dependency):
                 self.assertIn(f'"{dependency}"', pyproject)
 
+    def test_distribution_exposes_supported_console_commands(self):
+        pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+
+        self.assertIn(
+            'carry-trade-api = "carry_trade.api.app:run_dev_server"',
+            pyproject,
+        )
+        self.assertIn(
+            'carry-trade-model = "carry_trade.modeling.runners.run_live_model:main"',
+            pyproject,
+        )
+
     def test_canonical_model_console_output_is_portable(self):
         model = (
             REPO_ROOT
