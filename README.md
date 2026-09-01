@@ -1,10 +1,43 @@
 # Carry Trade Research Model
 
+[![CI](https://github.com/Aidan2111/carry-trade-model/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Aidan2111/carry-trade-model/actions/workflows/ci.yml)
+[![Security](https://github.com/Aidan2111/carry-trade-model/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/Aidan2111/carry-trade-model/actions/workflows/security.yml)
+[![Release](https://img.shields.io/github/v/release/Aidan2111/carry-trade-model)](https://github.com/Aidan2111/carry-trade-model/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](pyproject.toml)
+
 A Python and React research project for exploring currency carry trade signals, FX data collection, macro indicators, news sentiment, and dashboard-driven analysis.
 
 Built by [Aidan Marshall](https://aidanmarshall.ai/), a Dallas-based AI engineer focused on agentic AI systems, enterprise automation, and applied AI engineering.
 
 This repository is intentionally framed as a research and engineering project, not a trading product. The current public-facing flow favors traceable data, explicit fallbacks, and honest labels over inflated claims.
+
+## Verified Evidence
+
+The repository keeps its strongest claims tied to commands that run offline or
+with deterministic fixtures:
+
+- **API contract:** `python scripts/system_evaluation.py` verifies the health
+  route, real-data dashboard schema, canonical key style, and the default-off
+  model-update gate.
+- **Model validation:** `python -m unittest tests.test_model_validation`
+  verifies forward seven-day target construction, no-skill behavior on pure
+  noise, and recovery of a planted signal.
+- **Frontend:** `npm ci && npm run build` type-checks the React/TypeScript app
+  and produces the Vite production bundle.
+- **Portability and security:** CI covers Python 3.11-3.13 plus Windows, while
+  scheduled jobs audit Python and npm dependencies and scan repository history
+  for secrets.
+
+These checks establish software and evaluation behavior; they are not an investment-performance claim, a live-trading result, or evidence that the
+research model will generalize to future markets. See the current
+[evaluation record](docs/reports/EVALUATION_RESULTS.md) for the exact boundary.
+
+![Carry Trade dashboard](docs/images/dashboard.png)
+
+The screenshot is a local development capture with the API connected and no
+research logs loaded. The explicit empty states are intentional: the dashboard
+does not manufacture market, prediction, or performance data for a demo.
 
 ## Why This Project Exists
 
@@ -104,6 +137,18 @@ The project uses a `src/carry_trade/` package so current implementation code is 
 - macOS only, for XGBoost/LightGBM: `brew install libomp` if you want boosted-tree models. Without `libomp`, the improved model falls back to scikit-learn estimators.
 
 ### Backend Setup
+
+#### Install for use
+
+Install the current tagged backend wheel without an editable checkout:
+
+```bash
+python -m pip install \
+  https://github.com/Aidan2111/carry-trade-model/releases/download/v0.1.0/carry_trade_model-0.1.0-py3-none-any.whl
+carry-trade-api
+```
+
+#### Contributor setup
 
 ```bash
 git clone https://github.com/Aidan2111/carry-trade-model.git
@@ -212,6 +257,16 @@ npm audit
 ```
 
 The frontend uses Vite and commits `frontend/package-lock.json` for reproducible installs.
+
+### Package publication
+
+GitHub releases are the current distribution source. The manual
+`.github/workflows/publish-pypi.yml` workflow is ready for PyPI trusted
+publishing after a maintainer registers the repository, workflow, and `pypi`
+environment with PyPI. It validates the requested tag, reruns tests, builds and
+checks the artifacts, and publishes through OpenID Connect without a stored API
+token. Do not use `pip install carry-trade-model` until that workflow has
+completed successfully for a release.
 
 ## Repository Hygiene
 
