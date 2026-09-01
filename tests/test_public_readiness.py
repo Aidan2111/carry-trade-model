@@ -38,6 +38,39 @@ def iter_public_text_files():
 
 
 class PublicReadinessTests(unittest.TestCase):
+    def test_public_proof_and_manual_publish_contract(self):
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        for marker in (
+            "actions/workflows/ci.yml/badge.svg",
+            "actions/workflows/security.yml/badge.svg",
+            "releases/latest",
+            "License-MIT",
+            "Python-3.11%2B",
+            "## Verified Evidence",
+            "API contract",
+            "not an investment-performance claim",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, readme)
+
+        publish_path = REPO_ROOT / ".github" / "workflows" / "publish-pypi.yml"
+        self.assertTrue(publish_path.is_file())
+        publish = publish_path.read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", publish)
+        self.assertNotIn("release:\n", publish)
+        self.assertIn("id-token: write", publish)
+        self.assertIn("Verify requested tag", publish)
+        self.assertIn("twine check", publish)
+        self.assertIn("pypa/gh-action-pypi-publish", publish)
+
+    def test_readme_displays_the_real_dashboard_capture(self):
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        image_path = REPO_ROOT / "docs" / "images" / "dashboard.png"
+
+        self.assertTrue(image_path.is_file(), "dashboard capture is missing")
+        self.assertGreater(image_path.stat().st_size, 50_000)
+        self.assertIn("![Carry Trade dashboard](docs/images/dashboard.png)", readme)
+
     def test_no_hardcoded_newsapi_key_is_present(self):
         leaked_key_sha256 = (
             "37dc8f765f17593933431a0e0921379473c44cfb2328816cc28464d9c2a1f8a9"
