@@ -5,6 +5,15 @@ here.
 
 ## Unreleased
 
+- Stop returning internal exception and model-runner error details in API responses;
+  structured model-update failures now return HTTP 500. Diagnostics stay in server logs.
+- Refresh compatible dashboard dependencies to remove known npm advisories.
+- Use Node 24 in CI and releases, with Node 22.12 as the supported local minimum.
+- Fetch research news feeds over HTTPS, refuse redirects, and parse fetched
+  content without allowing secondary URL or local-file reads.
+- Exclude generated frontend dependencies and bundles from Python source
+  distributions while retaining authored frontend configuration files.
+
 ## 0.1.0 - 2026-08-23
 
 - Added installable API and model-runner commands and distribution validation.

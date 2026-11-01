@@ -34,8 +34,10 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from carry_trade.data.sources.news_client import get_newsapi_client
 from carry_trade.paths import PROJECT_ROOT
 import logging
+from io import BytesIO
 from typing import Dict, List, Optional
 import schedule
+from carry_trade.data.sources.rss_client import fetch_rss_bytes
 
 class EnhancedDataScraper:
     def __init__(self):
@@ -67,9 +69,9 @@ class EnhancedDataScraper:
         
         # RSS feeds for free news collection
         self.news_feeds = {
-            'reuters': 'http://feeds.reuters.com/reuters/businessNews',
+            'reuters': 'https://feeds.reuters.com/reuters/businessNews',
             'cnbc': 'https://www.cnbc.com/id/100727362/device/rss/rss.html',
-            'bbc': 'http://feeds.bbci.co.uk/news/business/rss.xml',
+            'bbc': 'https://feeds.bbci.co.uk/news/business/rss.xml',
             'financial_times': 'https://www.ft.com/markets?format=rss',
             'bloomberg': 'https://feeds.bloomberg.com/markets/news.rss'
         }
@@ -225,7 +227,9 @@ class EnhancedDataScraper:
         
         for source, url in self.news_feeds.items():
             try:
-                feed = feedparser.parse(url)
+                # A stream prevents feedparser from treating body bytes as a
+                # second URL or local filename to open.
+                feed = feedparser.parse(BytesIO(fetch_rss_bytes(url)))
                 
                 for entry in feed.entries[:3]:  # Latest 3 from each source
                     news_items.append({

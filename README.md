@@ -132,7 +132,7 @@ The project uses a `src/carry_trade/` package so current implementation code is 
 ### Prerequisites
 
 - Python 3.11 or newer.
-- Node.js 20.19 or newer for the Vite dashboard.
+- Node.js 22.12 or newer for the Vite dashboard.
 - Git.
 - macOS only, for XGBoost/LightGBM: `brew install libomp` if you want boosted-tree models. Without `libomp`, the improved model falls back to scikit-learn estimators.
 

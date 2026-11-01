@@ -25,6 +25,7 @@ import sys
 from datetime import datetime, timedelta
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from carry_trade.data.sources.news_client import get_newsapi_client
+from carry_trade.data.sources.rss_client import fetch_rss_bytes
 from carry_trade.paths import PROJECT_ROOT
 import logging
 from typing import Dict, List, Optional
@@ -201,39 +202,36 @@ class SimpleEnhancedScraper:
         
         # Free RSS feeds (no rate limits)
         feeds = {
-            'reuters': 'http://feeds.reuters.com/reuters/businessNews',
-            'bbc': 'http://feeds.bbci.co.uk/news/business/rss.xml',
+            'reuters': 'https://feeds.reuters.com/reuters/businessNews',
+            'bbc': 'https://feeds.bbci.co.uk/news/business/rss.xml',
             'cnbc': 'https://www.cnbc.com/id/100727362/device/rss/rss.html'
         }
         
         for source, url in feeds.items():
             try:
                 # Simple RSS parsing without external libraries
-                response = requests.get(url, timeout=15)
-                if response.status_code == 200:
-                    # Basic XML parsing for RSS
-                    content = response.text
-                    
-                    # Extract titles using simple string operations
-                    titles = []
-                    lines = content.split('\n')
-                    for line in lines:
-                        if '<title>' in line and '</title>' in line:
-                            start = line.find('<title>') + 7
-                            end = line.find('</title>')
-                            if start > 6 and end > start:
-                                title = line[start:end].strip()
-                                if len(title) > 10 and 'RSS' not in title:
-                                    titles.append(title)
-                    
-                    # Take latest 5 titles from each source
-                    for title in titles[:5]:
-                        articles.append({
-                            'title': title,
-                            'source': source,
-                            'published': datetime.now().strftime('%Y-%m-%d'),
-                            'url': url
-                        })
+                content = fetch_rss_bytes(url).decode('utf-8', errors='replace')
+
+                # Extract titles using simple string operations
+                titles = []
+                lines = content.split('\n')
+                for line in lines:
+                    if '<title>' in line and '</title>' in line:
+                        start = line.find('<title>') + 7
+                        end = line.find('</title>')
+                        if start > 6 and end > start:
+                            title = line[start:end].strip()
+                            if len(title) > 10 and 'RSS' not in title:
+                                titles.append(title)
+
+                # Take latest 5 titles from each source
+                for title in titles[:5]:
+                    articles.append({
+                        'title': title,
+                        'source': source,
+                        'published': datetime.now().strftime('%Y-%m-%d'),
+                        'url': url
+                    })
                         
             except Exception as e:
                 print(f"     ⚠️ RSS {source} failed: {str(e)[:30]}...")

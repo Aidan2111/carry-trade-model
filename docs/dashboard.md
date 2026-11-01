@@ -58,7 +58,7 @@ A local research dashboard for carry trade modeling and analysis, showing API-ba
 
 ### Prerequisites
 - Python 3.11+
-- Node.js 20.19+ for the Vite dashboard
+- Node.js 22.12+ for the Vite dashboard
 - Virtual environment (recommended)
 
 ### Backend Setup
@@ -114,6 +114,13 @@ A local research dashboard for carry trade modeling and analysis, showing API-ba
 ### Utility Endpoints
 - `GET /health` - API health check
 - `POST /api/update-model` - Disabled by default; set `ENABLE_MODEL_UPDATE_ENDPOINT=true` only for local research use
+
+Dashboard and model-update failures return generic HTTP 500 JSON responses;
+diagnostic details stay in server logs. A returned model-runner failure also
+uses HTTP 500. Disabled model updates retain HTTP 403.
+
+News collectors accept HTTPS feed URLs and skip redirects or failed responses.
+Fetched feed content is parsed as data, without opening another URL or local file.
 
 ## Data Sources
 

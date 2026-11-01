@@ -58,8 +58,9 @@ def register_routes(app, data_provider, model_update_runner: Optional[Callable[[
     def get_dashboard_data():
         try:
             return jsonify(dashboard_service.get_dashboard_data())
-        except Exception as exc:
-            return jsonify({"error": str(exc)}), 500
+        except Exception:
+            app.logger.exception("Unable to load dashboard data")
+            return jsonify({"error": "Dashboard data is unavailable."}), 500
 
     @app.route("/api/update-model", methods=["POST"])
     def update_model():
@@ -79,10 +80,22 @@ def register_routes(app, data_provider, model_update_runner: Optional[Callable[[
                 from carry_trade.dashboard.integration import scheduled_model_run
 
                 runner = scheduled_model_run
-            return jsonify(runner())
-        except Exception as exc:
+            result = runner()
+            if isinstance(result, dict) and result.get("status") == "error":
+                app.logger.error(
+                    "Model update failed: %s",
+                    result.get("error") or result.get("message") or "Unknown runner failure",
+                )
+                return jsonify({
+                    "status": "error",
+                    "message": "Model update failed.",
+                    "timestamp": datetime.now().isoformat(),
+                }), 500
+            return jsonify(result)
+        except Exception:
+            app.logger.exception("Unable to update model")
             return jsonify({
                 "status": "error",
-                "message": str(exc),
+                "message": "Model update failed.",
                 "timestamp": datetime.now().isoformat(),
             }), 500

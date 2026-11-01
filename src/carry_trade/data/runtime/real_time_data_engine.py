@@ -31,6 +31,8 @@ import asyncio
 import aiohttp
 from concurrent.futures import ThreadPoolExecutor
 import schedule
+from io import BytesIO
+from carry_trade.data.sources.rss_client import fetch_rss_bytes
 
 # Configuration
 @dataclass
@@ -289,12 +291,12 @@ class NewsDataCollector:
         self.engine = engine
         self.logger = engine.logger
         self.rss_feeds = {
-            'reuters_business': 'http://feeds.reuters.com/reuters/businessNews',
-            'reuters_markets': 'http://feeds.reuters.com/news/artsculture',
+            'reuters_business': 'https://feeds.reuters.com/reuters/businessNews',
+            'reuters_markets': 'https://feeds.reuters.com/news/artsculture',
             'cnbc_world': 'https://www.cnbc.com/id/100727362/device/rss/rss.html',
             'bloomberg': 'https://feeds.bloomberg.com/markets/news.rss',
             'ft_markets': 'https://www.ft.com/rss/markets',
-            'bbc_business': 'http://feeds.bbci.co.uk/news/business/rss.xml'
+            'bbc_business': 'https://feeds.bbci.co.uk/news/business/rss.xml'
         }
         
     async def collect_news_data(self) -> List[Dict[str, Any]]:
@@ -324,8 +326,9 @@ class NewsDataCollector:
         
         for source, url in self.rss_feeds.items():
             try:
-                # Use feedparser to parse RSS
-                feed = feedparser.parse(url)
+                # A stream keeps fetched data out of feedparser's URL and
+                # local-file resource branches.
+                feed = feedparser.parse(BytesIO(fetch_rss_bytes(url)))
                 
                 for entry in feed.entries[:5]:  # Latest 5 from each source
                     news_items.append({
